@@ -52,8 +52,7 @@ void draw_gradient(Display* display) {
 
         ALLEGRO_COLOR color = al_map_rgb(red, green, blue);
 
-        //al_draw_filled_rectangle(0, y, display->SCREEN_WIDTH, y + 1, color);
-        al_draw_line(0, y, display->SCREEN_WIDTH, y, color, 0);
+        al_draw_filled_rectangle(0, y, display->SCREEN_WIDTH, y + 1, color);
     }
 
     al_flip_display();
@@ -97,6 +96,18 @@ int main() {
     al_draw_textf(font, al_map_rgb(250, 250, 250), textPosX, textPosY, ALLEGRO_ALIGN_LEFT, "%s", text);
     al_destroy_font(font);
     
+    ALLEGRO_COLOR buttonColor = al_map_rgb(255, 255, 255);
+
+    int buttonRadius = 50;
+    int buttonX = display->SCREEN_WIDTH / 2;
+    int buttonY = display->SCREEN_HEIGHT / 2;
+
+    ALLEGRO_COLOR symbolColor = al_map_rgb(138, 43, 226);
+    int symbolSize = 30;
+
+    al_draw_filled_circle(buttonX, buttonY, buttonRadius, buttonColor);
+    al_draw_filled_triangle(buttonX - symbolSize + 8, buttonY - symbolSize, buttonX + symbolSize + 8, buttonY, buttonX - symbolSize + 8, buttonY + symbolSize, symbolColor);
+
     al_flip_display();  
     al_rest(15.0);
 
