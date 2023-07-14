@@ -38,6 +38,25 @@ int init_allegro() {
     return 1;
 }
 
+void draw_gradient(Display* display) {
+    int startRed = 138;
+    int startGreen = 43;
+    int startBlue = 226;
+
+    int numIterations = display->SCREEN_HEIGHT;
+
+    for (int y = 0; y < numIterations; y++) {
+        int red = startRed - (y / 6);
+        int green = startGreen;
+        int blue = startBlue + (y / 54);
+
+        ALLEGRO_COLOR color = al_map_rgb(red, green, blue);
+
+        al_draw_line(0, y, display->SCREEN_WIDTH, y, color, 0);
+        al_flip_display();
+    }
+}
+
 int main() {
     if (!init_allegro()) {
         return -1;
@@ -57,11 +76,9 @@ int main() {
     int windowPosY = monitorInfo.y1 + (monitorInfo.y2 - monitorInfo.y1 - display->SCREEN_HEIGHT) / 2;
     
     al_set_window_position(display->screen, windowPosX, windowPosY);
+    draw_gradient(display);
 
-    ALLEGRO_COLOR backgroundColor = al_map_rgb(200, 200, 200);
-    al_clear_to_color(backgroundColor);
-
-    ALLEGRO_FONT* font = al_load_font("montserrat-black.ttf", 24, 0);
+    ALLEGRO_FONT* font = al_load_font("montserrat-bold.ttf", 24, 0);
     if (!font) {
         al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Fontes", "Falha ao criar/inicializar a fonte.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
         destroy_display(display);
@@ -74,7 +91,7 @@ int main() {
     int textPosX = display->SCREEN_WIDTH / 2 - al_get_text_width(font, text) / 2;
     int textPosY = 0;
     
-    al_draw_textf(font, al_map_rgb(75, 0, 130), textPosX, textPosY, ALLEGRO_ALIGN_LEFT, "%s", text);
+    al_draw_textf(font, al_map_rgb(250, 250, 250), textPosX, textPosY, ALLEGRO_ALIGN_LEFT, "%s", text);
     al_destroy_font(font);
     
     al_flip_display();  
