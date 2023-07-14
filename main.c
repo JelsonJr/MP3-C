@@ -52,10 +52,13 @@ void draw_gradient(Display* display) {
 
         ALLEGRO_COLOR color = al_map_rgb(red, green, blue);
 
+        //al_draw_filled_rectangle(0, y, display->SCREEN_WIDTH, y + 1, color);
         al_draw_line(0, y, display->SCREEN_WIDTH, y, color, 0);
-        al_flip_display();
     }
+
+    al_flip_display();
 }
+
 
 int main() {
     if (!init_allegro()) {
