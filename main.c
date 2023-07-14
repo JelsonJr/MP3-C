@@ -1,57 +1,86 @@
-#include <stdio.h>
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_font.h>
+#include "display.h"
+
+int init_allegro() {
+    if (!al_init()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o do Allegro", "Falha ao inicializar Allegro.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    }
+
+    if (!al_install_keyboard()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o do Teclado", "Falha ao inicializar teclado.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    }
+
+    if (!al_install_mouse()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o do Mouse", "Falha ao inicializar mouse.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    }
+
+    if (!al_init_primitives_addon()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Primitivas", "Falha ao inicializar add-on de primitivas.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    }
+
+    if (!al_init_font_addon()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Fontes", "Falha ao inicializar add-on de fontes.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    }
+
+    if (!al_init_ttf_addon()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Fontes", "Falha ao inicializar ttf para importa\xc3\xa7\xc3\xa3o de fontes.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    }
+    
+    return 1;
+}
 
 int main() {
-    ALLEGRO_DISPLAY* display = NULL;
-    const int screenWidth = 800;
-    const int screenHeight = 600;
-
-    if (!al_init()) {
-        fprintf(stderr, "Falha ao inicializar Allegro.\n");
+    if (!init_allegro()) {
         return -1;
     }
 
-    display = al_create_display(screenWidth, screenHeight);
+    Display* display = create_display(720, 480);
     if (!display) {
-        fprintf(stderr, "Falha ao criar janela.\n");
         return -1;
     }
 
-    al_set_window_title(display, "Hello World");
+    al_set_window_title(display->screen, "MPC");
 
     ALLEGRO_MONITOR_INFO monitorInfo;
     al_get_monitor_info(0, &monitorInfo);
-    int windowPosX = monitorInfo.x1 + (monitorInfo.x2 - monitorInfo.x1 - screenWidth) / 2;
-    int windowPosY = monitorInfo.y1 + (monitorInfo.y2 - monitorInfo.y1 - screenHeight) / 2;
-    al_set_window_position(display, windowPosX, windowPosY);
 
-    ALLEGRO_COLOR backgroundColor = al_map_rgb(200, 200, 200);  // Cor cinza claro (RGB: 200, 200, 200)
+    int windowPosX = monitorInfo.x1 + (monitorInfo.x2 - monitorInfo.x1 - display->SCREEN_WIDTH) / 2;
+    int windowPosY = monitorInfo.y1 + (monitorInfo.y2 - monitorInfo.y1 - display->SCREEN_HEIGHT) / 2;
+    
+    al_set_window_position(display->screen, windowPosX, windowPosY);
+
+    ALLEGRO_COLOR backgroundColor = al_map_rgb(200, 200, 200);
     al_clear_to_color(backgroundColor);
 
-    ALLEGRO_FONT* font = al_create_builtin_font();
+    ALLEGRO_FONT* font = al_load_font("montserrat-black.ttf", 24, 0);
     if (!font) {
-        fprintf(stderr, "Falha ao criar fonte.\n");
-        al_destroy_display(display);
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Fontes", "Falha ao criar/inicializar a fonte.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        destroy_display(display);
         return -1;
     }
-   
-    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA); // Configura o modo de mesclagem para desenhar o texto com transparência
-   
-    const char* text = "Hello World";
-    int fontSize = 36;  // Tamanho da fonte (36 pixels)
-    int textPosX = screenWidth / 2 - al_get_text_width(font, text) / 2;
-    int textPosY = screenHeight / 2 - al_get_font_ascent(font) / 2;
-    al_draw_textf(font, al_map_rgb(0, 0, 100), textPosX, textPosY, ALLEGRO_ALIGN_LEFT, "%s", text);
 
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+
+    const char* text = "Selecione a pr\xc3\xb3xima m\xc3\xbasica!";
+    int textPosX = display->SCREEN_WIDTH / 2 - al_get_text_width(font, text) / 2;
+    int textPosY = 0;
+    
+    al_draw_textf(font, al_map_rgb(75, 0, 130), textPosX, textPosY, ALLEGRO_ALIGN_LEFT, "%s", text);
     al_destroy_font(font);
+    
+    al_flip_display();  
+    al_rest(15.0);
 
-    al_flip_display();  // Atualiza o display
-
-    al_rest(5.0);  // Aguarda 5 segundos
-
-    al_destroy_display(display);
+    destroy_display(display);
 
     return 0;
 }
