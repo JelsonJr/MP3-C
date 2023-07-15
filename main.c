@@ -87,7 +87,7 @@ int main() {
 
     ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, 28, 0);;
     const char* text = "Selecione a pr\xc3\xb3xima m\xc3\xbasica e curta o som!";
-    const int posX = displayInicial->SCREEN_WIDTH / 2 - al_get_text_width(font, text) / 2;
+    int posX = displayInicial->SCREEN_WIDTH / 2 - al_get_text_width(font, text) / 2;
     Position* pos = create_position(posX, 20);
 
     draw_text(font, pos, al_map_rgb(250, 250, 250), text, "%s", ALLEGRO_ALIGN_LEFT);
@@ -96,6 +96,12 @@ int main() {
     pos = create_position(10, 460);
 
     draw_text(font, pos, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
+
+    font = al_load_font(MONTSERRAT_BOLD, 36, 0);
+    posX = displayInicial->SCREEN_WIDTH / 2 - al_get_text_width(font, "MPC") / 2;
+    pos = create_position(posX, 350);
+
+    draw_text(font, pos, al_map_rgb(250, 250, 250), "MPC", "%s", ALLEGRO_ALIGN_LEFT);
 
     ALLEGRO_EVENT_QUEUE* event_queue = al_create_event_queue();
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 60);
