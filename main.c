@@ -9,7 +9,7 @@
 
 #define BUTTON_RADIUS 70
 #define SYMBOL_SIZE 30
-#define ANIMATION_DURATION 0.6
+#define ANIMATION_DURATION 0.8
 
 int init_allegro() {
     if (!al_init()) {
@@ -55,11 +55,11 @@ void init_monitor(Display* display) {
     al_set_window_position(display->screen, windowPosX, windowPosY);
 }
 
-void animateButton(Display* display, ALLEGRO_COLOR buttonColor, ALLEGRO_COLOR symbolColor, float buttonScale) {
-    int buttonRadius = BUTTON_RADIUS * buttonScale;
-    int symbolSize = SYMBOL_SIZE * buttonScale;
+void animateButton(Display* display, ALLEGRO_COLOR buttonColor, ALLEGRO_COLOR symbolColor, float symbolSizeScale) {
     int buttonX = display->SCREEN_WIDTH / 2;
     int buttonY = display->SCREEN_HEIGHT / 2;
+    int buttonRadius = BUTTON_RADIUS;
+    int symbolSize = SYMBOL_SIZE * symbolSizeScale;
 
     // Desenhar o botão (círculo e triângulo)
     al_draw_filled_circle(buttonX, buttonY, buttonRadius, buttonColor);
@@ -105,24 +105,18 @@ int main() {
     al_register_event_source(event_queue, al_get_timer_event_source(timer));
 
     ALLEGRO_COLOR buttonColor = al_map_rgb(255, 255, 255);
-
-    int buttonRadius = 70;
-    int buttonX = displayInicial->SCREEN_WIDTH / 2;
-    int buttonY = displayInicial->SCREEN_HEIGHT / 2;
-
     ALLEGRO_COLOR symbolColor = al_map_rgb(138, 43, 226);
-    int symbolSize = 30;
- 
-    int mouseOverButton = 0;
 
-    al_draw_filled_circle(buttonX, buttonY, buttonRadius, buttonColor);
-    al_draw_filled_triangle(buttonX - symbolSize + 8, buttonY - symbolSize, buttonX + symbolSize + 8, buttonY, buttonX - symbolSize + 8, buttonY + symbolSize, symbolColor);
+    al_draw_filled_circle(displayInicial->SCREEN_WIDTH / 2, displayInicial->SCREEN_HEIGHT / 2, BUTTON_RADIUS, buttonColor);
+    al_draw_filled_triangle(displayInicial->SCREEN_WIDTH / 2 - SYMBOL_SIZE + 8, displayInicial->SCREEN_HEIGHT / 2 - SYMBOL_SIZE,
+        displayInicial->SCREEN_WIDTH / 2 + SYMBOL_SIZE + 8, displayInicial->SCREEN_HEIGHT / 2,
+        displayInicial->SCREEN_WIDTH / 2 - SYMBOL_SIZE + 8, displayInicial->SCREEN_HEIGHT / 2 + SYMBOL_SIZE, symbolColor);
 
     al_flip_display();
-    float buttonScale = 1.0;
+
+    float symbolSizeScale = 1.0;
     float targetScale = 1.0;
     float scaleStep = 0.0;
-    float animationTimer = 0.0;
 
     al_start_timer(timer);
 
@@ -141,16 +135,15 @@ int main() {
                 }
 
                 targetScale = 1.15;
-                scaleStep = (targetScale - buttonScale) / (ANIMATION_DURATION * 60.0);
-                animationTimer = 0.0;
+                scaleStep = (targetScale - symbolSizeScale) / (ANIMATION_DURATION * 60.0);
 
-                while (buttonScale < targetScale) {
-                    animateButton(displayInicial, al_map_rgb(255, 255, 255), al_map_rgb(138, 43, 226), buttonScale);
-                    buttonScale += scaleStep;
+                while (symbolSizeScale < targetScale) {
+                    animateButton(displayInicial, symbolColor, buttonColor, symbolSizeScale);
+                    symbolSizeScale += scaleStep;
                     al_rest(1.0 / 120.0);  // Acelerar a animação
                 }
 
-                animateButton(displayInicial, al_map_rgb(255, 255, 255), al_map_rgb(138, 43, 226), targetScale);
+                animateButton(displayInicial, symbolColor, buttonColor, targetScale);
             }
             else {
                 if (!al_is_event_queue_empty(event_queue)) {
@@ -158,16 +151,15 @@ int main() {
                 }
 
                 targetScale = 1.0;
-                scaleStep = (targetScale - buttonScale) / (ANIMATION_DURATION * 60.0);
-                animationTimer = 0.0;
+                scaleStep = (targetScale - symbolSizeScale) / (ANIMATION_DURATION * 60.0);
 
-                while (buttonScale > targetScale) {
-                    animateButton(displayInicial, al_map_rgb(255, 255, 255), al_map_rgb(138, 43, 226), buttonScale);
-                    buttonScale += scaleStep;
+                while (symbolSizeScale > targetScale) {
+                    animateButton(displayInicial, buttonColor, symbolColor, symbolSizeScale);
+                    symbolSizeScale += scaleStep;
                     al_rest(1.0 / 120.0);  // Acelerar a animação
                 }
 
-                animateButton(displayInicial, al_map_rgb(255, 255, 255), al_map_rgb(138, 43, 226), targetScale);
+                animateButton(displayInicial, buttonColor, symbolColor, targetScale);
             }
         }
         else if (ev.type == ALLEGRO_EVENT_TIMER) {
