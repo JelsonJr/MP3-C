@@ -69,6 +69,32 @@ void animateButton(Display* display, ALLEGRO_COLOR buttonColor, ALLEGRO_COLOR sy
     al_flip_display();
 }
 
+void draw_initial_screen(Display* display) {
+    al_set_window_title(display->screen, "MPC");
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+    
+    init_monitor(display);
+    draw_gradient(display);
+
+    int posX;
+    const char* textTitle = "Selecione a pr\xc3\xb3xima m\xc3\xbasica e curta o som!";
+
+    ALLEGRO_FONT* fontTitle = al_load_font(MONTSERRAT_BOLD, 28, 0);
+    posX = display->SCREEN_WIDTH / 2 - al_get_text_width(fontTitle, textTitle) / 2;
+    Position* posTitle = create_position(posX, 20);
+
+    ALLEGRO_FONT* fontApp = al_load_font(MONTSERRAT_BOLD, 36, 0);
+    posX = display->SCREEN_WIDTH / 2 - al_get_text_width(fontApp, "MPC") / 2;
+    Position* posApp = create_position(posX, 350);
+    
+    ALLEGRO_FONT* fontCredits = al_load_font(MONTSERRAT_SEMIBOLD, 12, 0);
+    Position* posCredits = create_position(10, 460);
+
+    draw_text(fontTitle, posTitle, al_map_rgb(250, 250, 250), textTitle, "%s", ALLEGRO_ALIGN_LEFT);
+    draw_text(fontApp, posApp, al_map_rgb(250, 250, 250), "MPC", "%s", ALLEGRO_ALIGN_LEFT);
+    draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
+}
+
 int main() {
     if (!init_allegro()) {
         return -1;
@@ -79,29 +105,7 @@ int main() {
         return -1;
     }
 
-    al_set_window_title(displayInicial->screen, "MPC");
-    init_monitor(displayInicial);
-
-    al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-    draw_gradient(displayInicial);
-
-    ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, 28, 0);;
-    const char* text = "Selecione a pr\xc3\xb3xima m\xc3\xbasica e curta o som!";
-    int posX = displayInicial->SCREEN_WIDTH / 2 - al_get_text_width(font, text) / 2;
-    Position* pos = create_position(posX, 20);
-
-    draw_text(font, pos, al_map_rgb(250, 250, 250), text, "%s", ALLEGRO_ALIGN_LEFT);
-
-    font = al_load_font(MONTSERRAT_SEMIBOLD, 12, 0);
-    pos = create_position(10, 460);
-
-    draw_text(font, pos, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
-
-    font = al_load_font(MONTSERRAT_BOLD, 36, 0);
-    posX = displayInicial->SCREEN_WIDTH / 2 - al_get_text_width(font, "MPC") / 2;
-    pos = create_position(posX, 350);
-
-    draw_text(font, pos, al_map_rgb(250, 250, 250), "MPC", "%s", ALLEGRO_ALIGN_LEFT);
+    draw_initial_screen(displayInicial);
 
     ALLEGRO_EVENT_QUEUE* event_queue = al_create_event_queue();
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 60);
