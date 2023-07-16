@@ -42,6 +42,11 @@ int init_allegro() {
         return 0;
     }
 
+    if (!al_init_image_addon()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Imagens", "Falha ao inicializar add-on de imagens.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -69,6 +74,12 @@ void animateButton(Display* display, ALLEGRO_COLOR buttonColor, ALLEGRO_COLOR sy
     al_flip_display();
 }
 
+int find_screen_center(Display* display, ALLEGRO_FONT* font, const char* text) {
+    int center = display->SCREEN_WIDTH / 2 - al_get_text_width(font, text) / 2;
+
+    return center;
+}
+
 void draw_initial_screen(Display* display) {
     al_set_window_title(display->screen, "MPC");
     al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
@@ -78,21 +89,35 @@ void draw_initial_screen(Display* display) {
 
     int posX;
     const char* textTitle = "Selecione a pr\xc3\xb3xima m\xc3\xbasica e curta o som!";
+    const char* textApp = "MPC";
 
     ALLEGRO_FONT* fontTitle = al_load_font(MONTSERRAT_BOLD, 28, 0);
-    posX = display->SCREEN_WIDTH / 2 - al_get_text_width(fontTitle, textTitle) / 2;
+    posX = find_screen_center(display, fontTitle, textTitle);
     Position* posTitle = create_position(posX, 20);
 
     ALLEGRO_FONT* fontApp = al_load_font(MONTSERRAT_BOLD, 36, 0);
-    posX = display->SCREEN_WIDTH / 2 - al_get_text_width(fontApp, "MPC") / 2;
+    posX = find_screen_center(display, fontApp, textApp);
     Position* posApp = create_position(posX, 350);
     
     ALLEGRO_FONT* fontCredits = al_load_font(MONTSERRAT_SEMIBOLD, 12, 0);
     Position* posCredits = create_position(10, 460);
 
     draw_text(fontTitle, posTitle, al_map_rgb(250, 250, 250), textTitle, "%s", ALLEGRO_ALIGN_LEFT);
-    draw_text(fontApp, posApp, al_map_rgb(250, 250, 250), "MPC", "%s", ALLEGRO_ALIGN_LEFT);
+    draw_text(fontApp, posApp, al_map_rgb(250, 250, 250), textApp, "%s", ALLEGRO_ALIGN_LEFT);
     draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
+}
+
+int is_mouse_over_credits(int mouseX, int mouseY, Position* posCredits, ALLEGRO_FONT* fontCredits) {
+    int textWidth = al_get_text_width(fontCredits, "Criado por: Jelson Rodrigues Junior");
+    int textHeight = al_get_font_line_height(fontCredits);
+
+    return (mouseX >= posCredits->x && mouseX <= posCredits->x + textWidth &&
+        mouseY >= posCredits->y && mouseY <= posCredits->y + textHeight);
+}
+
+int is_mouse_over_button(Display* display, int mouseX, int mouseY) {
+    return (mouseX >= display->SCREEN_WIDTH / 2 - BUTTON_RADIUS && mouseX <= display->SCREEN_WIDTH / 2 + BUTTON_RADIUS &&
+        mouseY >= display->SCREEN_HEIGHT / 2 - BUTTON_RADIUS && mouseY <= display->SCREEN_HEIGHT / 2 + BUTTON_RADIUS);
 }
 
 int main() {
@@ -130,19 +155,36 @@ int main() {
 
     al_start_timer(timer);
 
+    Position* posCredits = create_position(10, 460);
+    ALLEGRO_FONT* fontCredits = al_load_font(MONTSERRAT_SEMIBOLD, 12, 0);
+
+    int mouseX = 0;
+    int mouseY = 0;
+
     while (1) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
 
-        if (ev.type == ALLEGRO_EVENT_MOUSE_AXES) {
-            int mouseX = ev.mouse.x;
-            int mouseY = ev.mouse.y;
+        mouseX = ev.mouse.x;
+        mouseY = ev.mouse.y;
 
-            if (mouseX >= displayInicial->SCREEN_WIDTH / 2 - BUTTON_RADIUS && mouseX <= displayInicial->SCREEN_WIDTH / 2 + BUTTON_RADIUS &&
-                mouseY >= displayInicial->SCREEN_HEIGHT / 2 - BUTTON_RADIUS && mouseY <= displayInicial->SCREEN_HEIGHT / 2 + BUTTON_RADIUS) {
+        if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
+            if (!al_is_event_queue_empty(event_queue)) {
+                continue;
+            }
+
+            if (is_mouse_over_credits(mouseX, mouseY, posCredits, fontCredits)) {
+                printf("Cliquei nos créditos!\n");
+            }
+        }
+
+        if (ev.type == ALLEGRO_EVENT_MOUSE_AXES) {
+            if (is_mouse_over_button(displayInicial, mouseX, mouseY)) {
                 if (!al_is_event_queue_empty(event_queue)) {
                     continue;
                 }
+
+                al_set_system_mouse_cursor(displayInicial->screen, ALLEGRO_SYSTEM_MOUSE_CURSOR_LINK);
 
                 targetScale = 1.15;
                 scaleStep = (targetScale - symbolSizeScale) / (ANIMATION_DURATION * 60.0);
@@ -150,32 +192,36 @@ int main() {
                 while (symbolSizeScale < targetScale) {
                     animateButton(displayInicial, symbolColor, buttonColor, symbolSizeScale);
                     symbolSizeScale += scaleStep;
-                    al_rest(1.0 / 120.0);  // Acelerar a animação
+                    al_rest(1.0 / 120.0);
                 }
 
                 animateButton(displayInicial, symbolColor, buttonColor, targetScale);
+                continue;
             }
-            else {
-                if (!al_is_event_queue_empty(event_queue)) {
-                    continue;
-                }
-
-                targetScale = 1.0;
-                scaleStep = (targetScale - symbolSizeScale) / (ANIMATION_DURATION * 60.0);
-
-                while (symbolSizeScale > targetScale) {
-                    animateButton(displayInicial, buttonColor, symbolColor, symbolSizeScale);
-                    symbolSizeScale += scaleStep;
-                    al_rest(1.0 / 120.0);  // Acelerar a animação
-                }
-
-                animateButton(displayInicial, buttonColor, symbolColor, targetScale);
+            
+            if (!al_is_event_queue_empty(event_queue)) {
+                continue;
             }
+
+            al_set_system_mouse_cursor(displayInicial->screen, ALLEGRO_SYSTEM_MOUSE_CURSOR_DEFAULT);
+
+            targetScale = 1.0;
+            scaleStep = (targetScale - symbolSizeScale) / (ANIMATION_DURATION * 60.0);
+
+            while (symbolSizeScale > targetScale) {
+                animateButton(displayInicial, buttonColor, symbolColor, symbolSizeScale);
+                symbolSizeScale += scaleStep;
+                al_rest(1.0 / 120.0);  // Acelerar a animação
+            }
+
+            animateButton(displayInicial, buttonColor, symbolColor, targetScale);
         }
-        else if (ev.type == ALLEGRO_EVENT_TIMER) {
+
+        if (ev.type == ALLEGRO_EVENT_TIMER) {
             // Timer event
         }
-        else if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+        
+        if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
             break;
         }
     }
