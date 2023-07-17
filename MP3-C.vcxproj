@@ -144,12 +144,14 @@
     <ClCompile Include="display.c" />
     <ClCompile Include="draw.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="mouse_location.c" />
     <ClCompile Include="position.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="display.h" />
     <ClInclude Include="draw.h" />
     <ClInclude Include="fonts.h" />
+    <ClInclude Include="mouse_location.h" />
     <ClInclude Include="position.h" />
   </ItemGroup>
   <ItemGroup>

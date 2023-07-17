@@ -6,6 +6,7 @@
 #include "position.h"
 #include "draw.h"
 #include "fonts.h"
+#include "mouse_location.h"
 
 #define BUTTON_RADIUS 70
 #define SYMBOL_SIZE 30
@@ -66,11 +67,9 @@ void animateButton(Display* display, ALLEGRO_COLOR buttonColor, ALLEGRO_COLOR sy
     int buttonRadius = BUTTON_RADIUS;
     int symbolSize = SYMBOL_SIZE * symbolSizeScale;
 
-    // Desenhar o botão (círculo e triângulo)
     al_draw_filled_circle(buttonX, buttonY, buttonRadius, buttonColor);
     al_draw_filled_triangle(buttonX - symbolSize + 8, buttonY - symbolSize, buttonX + symbolSize + 8, buttonY, buttonX - symbolSize + 8, buttonY + symbolSize, symbolColor);
 
-    // Atualizar a tela
     al_flip_display();
 }
 
@@ -105,19 +104,6 @@ void draw_initial_screen(Display* display) {
     draw_text(fontTitle, posTitle, al_map_rgb(250, 250, 250), textTitle, "%s", ALLEGRO_ALIGN_LEFT);
     draw_text(fontApp, posApp, al_map_rgb(250, 250, 250), textApp, "%s", ALLEGRO_ALIGN_LEFT);
     draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
-}
-
-int is_mouse_over_credits(int mouseX, int mouseY, Position* posCredits, ALLEGRO_FONT* fontCredits) {
-    int textWidth = al_get_text_width(fontCredits, "Criado por: Jelson Rodrigues Junior");
-    int textHeight = al_get_font_line_height(fontCredits);
-
-    return (mouseX >= posCredits->x && mouseX <= posCredits->x + textWidth &&
-        mouseY >= posCredits->y && mouseY <= posCredits->y + textHeight);
-}
-
-int is_mouse_over_button(Display* display, int mouseX, int mouseY) {
-    return (mouseX >= display->SCREEN_WIDTH / 2 - BUTTON_RADIUS && mouseX <= display->SCREEN_WIDTH / 2 + BUTTON_RADIUS &&
-        mouseY >= display->SCREEN_HEIGHT / 2 - BUTTON_RADIUS && mouseY <= display->SCREEN_HEIGHT / 2 + BUTTON_RADIUS);
 }
 
 int main() {
@@ -175,7 +161,12 @@ int main() {
             }
 
             if (is_mouse_over_credits(mouseX, mouseY, posCredits, fontCredits)) {
-                printf("Cliquei nos créditos!\n");
+                printf("Cliquei nos creditos!\n");
+                break;
+            }
+
+            if (is_mouse_over_button(displayInicial, mouseX, mouseY, BUTTON_RADIUS)) {
+                printf("Cliquei no botao!\n");
                 break;
             }
         }
@@ -188,7 +179,7 @@ int main() {
                 continue;
             }
 
-            if (is_mouse_over_button(displayInicial, mouseX, mouseY)) {
+            if (is_mouse_over_button(displayInicial, mouseX, mouseY, BUTTON_RADIUS)) {
                 if (!al_is_event_queue_empty(event_queue)) {
                     continue;
                 }
