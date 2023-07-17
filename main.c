@@ -160,6 +160,7 @@ int main() {
 
     int mouseX = 0;
     int mouseY = 0;
+    int mouseCursorDefault = 1;
 
     while (1) {
         ALLEGRO_EVENT ev;
@@ -175,16 +176,25 @@ int main() {
 
             if (is_mouse_over_credits(mouseX, mouseY, posCredits, fontCredits)) {
                 printf("Cliquei nos créditos!\n");
+                break;
             }
         }
 
         if (ev.type == ALLEGRO_EVENT_MOUSE_AXES) {
+            if (is_mouse_over_credits(mouseX, mouseY, posCredits, fontCredits)) {
+                al_set_system_mouse_cursor(displayInicial->screen, ALLEGRO_SYSTEM_MOUSE_CURSOR_LINK);
+                mouseCursorDefault = 0;
+
+                continue;
+            }
+
             if (is_mouse_over_button(displayInicial, mouseX, mouseY)) {
                 if (!al_is_event_queue_empty(event_queue)) {
                     continue;
                 }
 
                 al_set_system_mouse_cursor(displayInicial->screen, ALLEGRO_SYSTEM_MOUSE_CURSOR_LINK);
+                mouseCursorDefault = 0;
 
                 targetScale = 1.15;
                 scaleStep = (targetScale - symbolSizeScale) / (ANIMATION_DURATION * 60.0);
@@ -196,14 +206,18 @@ int main() {
                 }
 
                 animateButton(displayInicial, symbolColor, buttonColor, targetScale);
+                
                 continue;
-            }
-            
+            } 
+             
             if (!al_is_event_queue_empty(event_queue)) {
                 continue;
             }
 
-            al_set_system_mouse_cursor(displayInicial->screen, ALLEGRO_SYSTEM_MOUSE_CURSOR_DEFAULT);
+            if (!mouseCursorDefault) {
+                al_set_system_mouse_cursor(displayInicial->screen, ALLEGRO_SYSTEM_MOUSE_CURSOR_DEFAULT);
+                mouseCursorDefault = 1;
+            }
 
             targetScale = 1.0;
             scaleStep = (targetScale - symbolSizeScale) / (ANIMATION_DURATION * 60.0);
@@ -211,7 +225,7 @@ int main() {
             while (symbolSizeScale > targetScale) {
                 animateButton(displayInicial, buttonColor, symbolColor, symbolSizeScale);
                 symbolSizeScale += scaleStep;
-                al_rest(1.0 / 120.0);  // Acelerar a animação
+                al_rest(1.0 / 120.0);
             }
 
             animateButton(displayInicial, buttonColor, symbolColor, targetScale);
@@ -227,6 +241,8 @@ int main() {
     }
 
     destroy_display(displayInicial);
+    destroy_position(posCredits);
+    al_destroy_font(fontCredits);
     al_destroy_event_queue(event_queue);
 
     return 0;
