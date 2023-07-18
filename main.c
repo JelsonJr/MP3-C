@@ -334,8 +334,8 @@ int main() {
             }
 
             if (is_mouse_over_credits(mouseX, mouseY, posCredits, fontCredits)) {
-                printf("Cliquei nos creditos!\n");
-                break;
+                al_show_native_message_box(displayInicial->screen, "Caixa de Di\xc3\xa1logo", "Hello World", "Este \xc3\xa9 um exemplo de caixa de di\xc3\xa1logo!", NULL, ALLEGRO_MESSAGEBOX_QUESTION);
+                continue;
             }
 
             if (is_mouse_over_button(displayInicial, mouseX, mouseY, BUTTON_RADIUS)) {
