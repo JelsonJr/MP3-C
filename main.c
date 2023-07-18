@@ -2,11 +2,20 @@
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_audio.h>
+#include <allegro5/allegro_acodec.h>
+#include <dirent.h>
 #include "display.h"
 #include "position.h"
 #include "draw.h"
 #include "fonts.h"
 #include "mouse_location.h"
+#ifdef _WIN32
+#include <io.h>
+#define getcwd _getcwd
+#else
+#include <unistd.h>
+#endif
 
 #define BUTTON_RADIUS 70
 #define SYMBOL_SIZE 30
@@ -44,6 +53,16 @@ int init_allegro() {
     }
 
     if (!al_init_image_addon()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Imagens", "Falha ao inicializar add-on de imagens.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    } 
+    
+    if (!al_install_audio()) {
+        al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Imagens", "Falha ao inicializar add-on de imagens.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+        return 0;
+    } 
+    
+    if (!al_init_acodec_addon()) {
         al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Imagens", "Falha ao inicializar add-on de imagens.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
         return 0;
     }
@@ -106,6 +125,160 @@ void draw_initial_screen(Display* display) {
     draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
 }
 
+/*void play_sound(const char* file) {
+    ALLEGRO_MIXER* mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
+    if (!mixer) {
+        fprintf(stderr, "Falha ao criar o mixer.\n");
+        return -1;
+    }
+
+    ALLEGRO_SAMPLE* audioSample = al_load_sample(file);
+    if (!audioSample) {
+        fprintf(stderr, "Falha ao carregar o arquivo de áudio.\n");
+        return -1;
+    }
+
+    printf("dentro da funcao de tocar musica\n");
+    al_play_sample(audioSample, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
+    
+    // al_rest(25.0); Aguarda 5 segundos para ouvir o áudio
+    al_destroy_sample(audioSample);
+    al_destroy_mixer(mixer);
+    al_uninstall_audio();
+    printf("dentro da funcao de tocar musica - FIM\n");
+}*/
+
+void playWav(const char* filepath) {
+    // Inicializa o subsistema de áudio
+    if (!al_install_audio()) {
+        printf("Erro ao inicializar o subsistema de áudio!\n");
+        return;
+    }
+
+    if (!al_init_acodec_addon()) {
+        printf("Erro ao inicializar o addon de áudio do Allegro!\n");
+        return;
+    }
+
+    // Reserva 1 canal de áudio para reprodução
+    if (!al_reserve_samples(1)) {
+        printf("Erro ao reservar canais de áudio!\n");
+        return;
+    }
+
+    // Carrega o arquivo .wav
+    ALLEGRO_SAMPLE* audioSample = al_load_sample(filepath);
+    if (!audioSample) {
+        printf("Erro ao carregar o arquivo .wav: %s\n", filepath);
+        return;
+    }
+
+    // Cria a instância para reproduzir o áudio
+    ALLEGRO_SAMPLE_INSTANCE* instance = al_create_sample_instance(audioSample);
+    if (!instance) {
+        printf("Erro ao criar a instância de áudio!\n");
+        al_destroy_sample(audioSample);
+        return;
+    }
+
+    // Anexa a instância ao mixer padrão
+    if (!al_attach_sample_instance_to_mixer(instance, al_get_default_mixer())) {
+        printf("Erro ao anexar a instância ao mixer!\n");
+        al_destroy_sample_instance(instance);
+        al_destroy_sample(audioSample);
+        return;
+    }
+
+    // Reproduz o áudio
+    al_play_sample_instance(instance);
+
+    int teste = 0;
+    al_get_sample_instance_playing(instance);
+    // Aguarda a reprodução terminar
+    while (al_get_sample_instance_playing(instance)) {
+        al_rest(1);
+        teste++;
+        printf("%ds ", teste);
+    }    
+    // Limpeza e destruição dos recursos
+    al_destroy_sample_instance(instance);
+    al_destroy_sample(audioSample);
+
+    // Finaliza o subsistema de áudio
+    al_uninstall_audio();
+}
+
+void encontrar_caminho_relativo(const char* caminho_atual, const char* caminho_absoluto) {
+    const char* delimiter = "\\";
+    char* context_atual;
+    char* context_absoluto;
+    char caminho_relativo[512] = "";
+
+    char* token_atual = strtok_s((char*)caminho_atual, delimiter, &context_atual);
+    char* token_absoluto = strtok_s((char*)caminho_absoluto, delimiter, &context_absoluto);
+
+    while (token_atual && token_absoluto && strcmp(token_atual, token_absoluto) == 0) {
+        token_atual = strtok_s(NULL, delimiter, &context_atual);
+        token_absoluto = strtok_s(NULL, delimiter, &context_absoluto);
+    }
+
+    while (token_atual) {
+        strcat_s(caminho_relativo, sizeof(caminho_relativo), "..\\");
+        token_atual = strtok_s(NULL, delimiter, &context_atual);
+    }
+
+    if (token_absoluto) {
+        strcat_s(caminho_relativo, sizeof(caminho_relativo), token_absoluto);
+        token_absoluto = strtok_s(NULL, delimiter, &context_absoluto);
+
+        while (token_absoluto) {
+            strcat_s(caminho_relativo, sizeof(caminho_relativo), "\\");
+            strcat_s(caminho_relativo, sizeof(caminho_relativo), token_absoluto);
+            token_absoluto = strtok_s(NULL, delimiter, &context_absoluto);
+        }
+    }
+
+    printf("Caminho relativo: %s\n", caminho_relativo);
+    playWav(caminho_relativo);
+
+}
+
+void listar_arquivos_diretorio(const char* diretorio) {
+    DIR* dir;
+    struct dirent* entrada;
+
+    dir = opendir(diretorio);
+
+    if (dir == NULL) {
+        printf("Erro ao abrir o diretório.\n");
+        return;
+    }
+
+    char caminho_atual[256];
+    char caminho_absoluto[512];
+
+    if (getcwd(caminho_atual, sizeof(caminho_atual)) == NULL) {
+        return;
+    }
+
+    while ((entrada = readdir(dir)) != NULL) {
+        if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0)
+            continue;
+
+        char* extensao = strrchr(entrada->d_name, '.');
+        if ((extensao != NULL && strcmp(extensao, ".wav") == 0)) {
+            snprintf(caminho_absoluto, sizeof(caminho_absoluto), "%s\\%s", diretorio, entrada->d_name);
+
+            printf("Caminho absoluto: %s\n", caminho_absoluto);
+            printf("Caminho do diretorio atual: %s\n", caminho_atual);
+
+            encontrar_caminho_relativo(caminho_atual, caminho_absoluto);
+        }
+    }
+
+    closedir(dir);
+}
+
 int main() {
     if (!init_allegro()) {
         return -1;
@@ -166,7 +339,8 @@ int main() {
             }
 
             if (is_mouse_over_button(displayInicial, mouseX, mouseY, BUTTON_RADIUS)) {
-                printf("Cliquei no botao!\n");
+                listar_arquivos_diretorio("C:\\Users\\Jelson\\Downloads");
+                
                 break;
             }
         }
@@ -231,6 +405,7 @@ int main() {
         }
     }
 
+    printf("fim do programa");
     destroy_display(displayInicial);
     destroy_position(posCredits);
     al_destroy_font(fontCredits);
