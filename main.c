@@ -287,8 +287,22 @@ int main() {
             }
 
             if (is_mouse_over_credits(mouseX, mouseY, posCredits, fontCredits)) {
-                al_show_native_message_box(displayInicial->screen, "Caixa de Di\xc3\xa1logo", "Hello World", "Este \xc3\xa9 um exemplo de caixa de di\xc3\xa1logo!", NULL, ALLEGRO_MESSAGEBOX_QUESTION);
+                const char* corpo_texto = "GitHub: https://github.com/JelsonJr\n"
+                    "LinkedIn: https://www.linkedin.com/in/jelson-rodrigues-53333a229/";
+
+                al_show_native_message_box(displayInicial->screen, "Informacoes do desenvolvedor", "Onde voce pode me encontrar:", corpo_texto, NULL, ALLEGRO_MESSAGEBOX_QUESTION);
+               
                 continue;
+            }
+
+            if (mouseY >= posCredits->y + al_get_font_line_height(fontCredits) &&
+                mouseY < posCredits->y + al_get_font_line_height(fontCredits) * 2) {
+                system("start https://github.com/JelsonJr");
+            }
+         
+            else if (mouseY >= posCredits->y + al_get_font_line_height(fontCredits) * 2 &&
+                mouseY < posCredits->y + al_get_font_line_height(fontCredits) * 3) {
+                system("start https://www.linkedin.com/in/jelson-rodrigues-53333a229/");
             }
 
             if (is_mouse_over_button(displayInicial, mouseX, mouseY, BUTTON_RADIUS)) {
