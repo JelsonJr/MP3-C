@@ -339,7 +339,7 @@ int main() {
             }
 
             if (is_mouse_over_button(displayInicial, mouseX, mouseY, BUTTON_RADIUS)) {
-                listar_arquivos_diretorio("C:\\Users\\Jelson\\Downloads");
+                listar_arquivos_diretorio("C:\\Users\\jelso\\Downloads");
                 
                 break;
             }
