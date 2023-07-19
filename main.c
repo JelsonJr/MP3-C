@@ -125,8 +125,7 @@ void draw_initial_screen(Display* display) {
     draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
 }
 
-void playWav(const char* filepath) {
-    // Inicializa o subsistema de áudio
+void play_sound(const char* filepath) {
     if (!al_install_audio()) {
         printf("Erro ao inicializar o subsistema de áudio!\n");
         return;
@@ -137,20 +136,17 @@ void playWav(const char* filepath) {
         return;
     }
 
-    // Reserva 1 canal de áudio para reprodução
     if (!al_reserve_samples(1)) {
         printf("Erro ao reservar canais de áudio!\n");
         return;
     }
 
-    // Carrega o arquivo .wav
     ALLEGRO_SAMPLE* audioSample = al_load_sample(filepath);
     if (!audioSample) {
         printf("Erro ao carregar o arquivo .wav: %s\n", filepath);
         return;
     }
 
-    // Cria a instância para reproduzir o áudio
     ALLEGRO_SAMPLE_INSTANCE* instance = al_create_sample_instance(audioSample);
     if (!instance) {
         printf("Erro ao criar a instância de áudio!\n");
@@ -158,7 +154,6 @@ void playWav(const char* filepath) {
         return;
     }
 
-    // Anexa a instância ao mixer padrão
     if (!al_attach_sample_instance_to_mixer(instance, al_get_default_mixer())) {
         printf("Erro ao anexar a instância ao mixer!\n");
         al_destroy_sample_instance(instance);
@@ -166,61 +161,23 @@ void playWav(const char* filepath) {
         return;
     }
 
-    // Reproduz o áudio
     al_play_sample_instance(instance);
 
     int teste = 0;
     al_get_sample_instance_playing(instance);
-    // Aguarda a reprodução terminar
+
     while (al_get_sample_instance_playing(instance)) {
         al_rest(1);
         teste++;
         printf("%ds ", teste);
     }    
-    // Limpeza e destruição dos recursos
+   
     al_destroy_sample_instance(instance);
     al_destroy_sample(audioSample);
-
-    // Finaliza o subsistema de áudio
     al_uninstall_audio();
 }
 
-void encontrar_caminho_relativo(const char* caminho_atual, const char* caminho_absoluto) {
-    const char* delimiter = "\\";
-    char* context_atual;
-    char* context_absoluto;
-    char caminho_relativo[512] = "";
-
-    char* token_atual = strtok_s((char*)caminho_atual, delimiter, &context_atual);
-    char* token_absoluto = strtok_s((char*)caminho_absoluto, delimiter, &context_absoluto);
-
-    while (token_atual && token_absoluto && strcmp(token_atual, token_absoluto) == 0) {
-        token_atual = strtok_s(NULL, delimiter, &context_atual);
-        token_absoluto = strtok_s(NULL, delimiter, &context_absoluto);
-    }
-
-    while (token_atual) {
-        strcat_s(caminho_relativo, sizeof(caminho_relativo), "..\\");
-        token_atual = strtok_s(NULL, delimiter, &context_atual);
-    }
-
-    if (token_absoluto) {
-        strcat_s(caminho_relativo, sizeof(caminho_relativo), token_absoluto);
-        token_absoluto = strtok_s(NULL, delimiter, &context_absoluto);
-
-        while (token_absoluto) {
-            strcat_s(caminho_relativo, sizeof(caminho_relativo), "\\");
-            strcat_s(caminho_relativo, sizeof(caminho_relativo), token_absoluto);
-            token_absoluto = strtok_s(NULL, delimiter, &context_absoluto);
-        }
-    }
-
-    printf("Caminho relativo: %s\n", caminho_relativo);
-    playWav(caminho_relativo);
-
-}
-
-void listar_arquivos_diretorio(const char* diretorio) {
+char** list_files_directory(const char* diretorio, int* num_arquivos) {
     DIR* dir;
     struct dirent* entrada;
 
@@ -228,15 +185,12 @@ void listar_arquivos_diretorio(const char* diretorio) {
 
     if (dir == NULL) {
         printf("Erro ao abrir o diretório.\n");
-        return;
+        *num_arquivos = 0;
+        return NULL;
     }
 
-    char caminho_atual[256];
-    char caminho_absoluto[512];
-
-    if (getcwd(caminho_atual, sizeof(caminho_atual)) == NULL) {
-        return;
-    }
+    char** lista_caminhos = NULL;
+    int num_caminhos = 0;
 
     while ((entrada = readdir(dir)) != NULL) {
         if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0)
@@ -244,16 +198,38 @@ void listar_arquivos_diretorio(const char* diretorio) {
 
         char* extensao = strrchr(entrada->d_name, '.');
         if ((extensao != NULL && strcmp(extensao, ".wav") == 0)) {
-            snprintf(caminho_absoluto, sizeof(caminho_absoluto), "%s\\%s", diretorio, entrada->d_name);
+            char caminho_absoluto[512];
+            snprintf(caminho_absoluto, sizeof(caminho_absoluto), "%s/%s", diretorio, entrada->d_name);
+ 
+            char** nova_lista_caminhos = (char**)realloc(lista_caminhos, (num_caminhos + 1) * sizeof(char*));
+            if (nova_lista_caminhos == NULL) {
+                printf("Erro de alocação de memória.\n");
+                closedir(dir);
+                *num_arquivos = num_caminhos;
+                return lista_caminhos; 
+            }
 
-            printf("Caminho absoluto: %s\n", caminho_absoluto);
-            printf("Caminho do diretorio atual: %s\n", caminho_atual);
+            lista_caminhos = nova_lista_caminhos;
+            lista_caminhos[num_caminhos] = (char*)malloc(strlen(caminho_absoluto) + 1);
 
-            encontrar_caminho_relativo(caminho_atual, caminho_absoluto);
+            if (lista_caminhos[num_caminhos] != NULL) {
+                strcpy_s(lista_caminhos[num_caminhos], strlen(caminho_absoluto) + 1, caminho_absoluto);
+                num_caminhos++;
+
+                continue;
+            }
+           
+            printf("Erro de alocação de memória.\n");
+            closedir(dir);
+            *num_arquivos = num_caminhos;
+
+            return lista_caminhos;     
         }
     }
 
     closedir(dir);
+    *num_arquivos = num_caminhos;
+    return lista_caminhos;
 }
 
 int main() {
@@ -316,8 +292,16 @@ int main() {
             }
 
             if (is_mouse_over_button(displayInicial, mouseX, mouseY, BUTTON_RADIUS)) {
-                listar_arquivos_diretorio("C:\\Users\\jelso\\Downloads");
+                int num_files = 0;
+
+                char** musics = list_files_directory("C:\\Users\\jelso\\Downloads", &num_files);
                 
+                for (int i = 0; i < num_files; i++) {
+                    char* music = musics[i];
+
+                    play_sound(music);
+                }
+
                 break;
             }
         }
