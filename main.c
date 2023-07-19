@@ -125,29 +125,6 @@ void draw_initial_screen(Display* display) {
     draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
 }
 
-/*void play_sound(const char* file) {
-    ALLEGRO_MIXER* mixer = al_create_mixer(44100, ALLEGRO_AUDIO_DEPTH_FLOAT32, ALLEGRO_CHANNEL_CONF_2);
-    if (!mixer) {
-        fprintf(stderr, "Falha ao criar o mixer.\n");
-        return -1;
-    }
-
-    ALLEGRO_SAMPLE* audioSample = al_load_sample(file);
-    if (!audioSample) {
-        fprintf(stderr, "Falha ao carregar o arquivo de áudio.\n");
-        return -1;
-    }
-
-    printf("dentro da funcao de tocar musica\n");
-    al_play_sample(audioSample, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
-    
-    // al_rest(25.0); Aguarda 5 segundos para ouvir o áudio
-    al_destroy_sample(audioSample);
-    al_destroy_mixer(mixer);
-    al_uninstall_audio();
-    printf("dentro da funcao de tocar musica - FIM\n");
-}*/
-
 void playWav(const char* filepath) {
     // Inicializa o subsistema de áudio
     if (!al_install_audio()) {
