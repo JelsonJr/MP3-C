@@ -290,8 +290,8 @@ int main() {
                 const char* corpo_texto = "GitHub: https://github.com/JelsonJr\n"
                     "LinkedIn: https://www.linkedin.com/in/jelson-rodrigues-53333a229/";
 
-                al_show_native_message_box(displayInicial->screen, "Informacoes do desenvolvedor", "Onde voce pode me encontrar:", corpo_texto, NULL, ALLEGRO_MESSAGEBOX_QUESTION);
-               
+                //al_show_native_message_box(displayInicial->screen, "Informacoes do desenvolvedor", "Onde voce pode me encontrar:", corpo_texto, NULL, ALLEGRO_MESSAGEBOX_QUESTION);
+                Display* displayTeste = create_display(250, 150);
                 continue;
             }
 
