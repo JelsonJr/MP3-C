@@ -144,16 +144,20 @@
   <ItemGroup>
     <ClCompile Include="display.c" />
     <ClCompile Include="draw.c" />
+    <ClCompile Include="initial_screen.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="mouse_location.c" />
     <ClCompile Include="position.c" />
+    <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="display.h" />
     <ClInclude Include="draw.h" />
     <ClInclude Include="fonts.h" />
+    <ClInclude Include="initial_screen.h" />
     <ClInclude Include="mouse_location.h" />
     <ClInclude Include="position.h" />
+    <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
