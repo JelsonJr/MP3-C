@@ -11,11 +11,12 @@
 #include "fonts.h"
 #include "mouse_location.h"
 #include "initial_screen.h"
+
 #ifdef _WIN32
-#include <io.h>
-#define getcwd _getcwd
+    #include <io.h>
+    #define getcwd _getcwd
 #else
-#include <unistd.h>
+    #include <unistd.h>
 #endif
 
 int init_allegro() {
