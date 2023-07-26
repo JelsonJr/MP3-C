@@ -13,4 +13,5 @@
 #define ANIMATION_DURATION 0.8
 
 void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLEGRO_TIMER* timer);
+int init_events(Display* display, ALLEGRO_EVENT_QUEUE** event_queue, ALLEGRO_TIMER** timer);
 void animateButton(Display* display, ALLEGRO_COLOR buttonColor, ALLEGRO_COLOR symbolColor, float symbolSizeScale);

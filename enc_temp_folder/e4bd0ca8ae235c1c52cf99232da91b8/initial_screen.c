@@ -101,6 +101,17 @@ char** list_files_directory(const char* diretorio, int* num_arquivos) {
     return lista_caminhos;
 }
 
+int init_events(Display* display, ALLEGRO_EVENT_QUEUE** event_queue, ALLEGRO_TIMER** timer) {
+    *event_queue = al_create_event_queue();
+    *timer = al_create_timer(1.0 / 60);
+
+    al_register_event_source(*event_queue, al_get_display_event_source(display->screen));
+    al_register_event_source(*event_queue, al_get_mouse_event_source());
+    al_register_event_source(*event_queue, al_get_timer_event_source(*timer));
+
+    return (*event_queue != NULL && *timer != NULL);
+}
+
 void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLEGRO_TIMER* timer) {
     al_set_window_title(display->screen, "MPC");
     al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);

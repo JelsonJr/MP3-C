@@ -63,17 +63,6 @@ int init_allegro() {
     return 1;
 }
 
-int init_events(Display* display, ALLEGRO_EVENT_QUEUE** event_queue, ALLEGRO_TIMER** timer) {
-    *event_queue = al_create_event_queue();
-    *timer = al_create_timer(1.0 / 60);
-
-    al_register_event_source(*event_queue, al_get_display_event_source(display->screen));
-    al_register_event_source(*event_queue, al_get_mouse_event_source());
-    al_register_event_source(*event_queue, al_get_timer_event_source(*timer));
-
-    return (*event_queue != NULL && *timer != NULL);
-}
-
 int main() {
     if (!init_allegro()) {
         return -1;
