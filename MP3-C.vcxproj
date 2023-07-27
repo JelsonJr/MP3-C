@@ -148,6 +148,7 @@
     <ClCompile Include="main.c" />
     <ClCompile Include="mouse_location.c" />
     <ClCompile Include="position.c" />
+    <ClCompile Include="thread.c" />
     <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>

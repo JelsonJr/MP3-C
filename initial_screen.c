@@ -101,7 +101,7 @@ char** list_files_directory(const char* diretorio, int* num_arquivos) {
     return lista_caminhos;
 }
 
-void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLEGRO_TIMER* timer) {
+int draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLEGRO_TIMER* timer) {
     al_set_window_title(display->screen, "MPC");
     al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 
@@ -122,7 +122,7 @@ void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALL
 
     draw_text(fontTitle, posTitle, al_map_rgb(250, 250, 250), textTitle, "%s", ALLEGRO_ALIGN_LEFT);
     draw_text(fontApp, posApp, al_map_rgb(250, 250, 250), textApp, "%s", ALLEGRO_ALIGN_LEFT);
-    draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Criado por: Jelson Rodrigues Junior", "%s", ALLEGRO_ALIGN_LEFT);
+    draw_text(fontCredits, posCredits, al_map_rgb(250, 250, 250), "Saiba mais sobre o projeto", "%s", ALLEGRO_ALIGN_LEFT);
 
     fontCredits = al_load_font(MONTSERRAT_SEMIBOLD, 12, 0);
     posCredits = create_position(10, 460);
@@ -145,6 +145,7 @@ void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALL
     int mouseX = 0;
     int mouseY = 0;
     int mouseCursorDefault = 1;
+    int option = 0;
 
     while (1) {
         ALLEGRO_EVENT ev;
@@ -159,11 +160,9 @@ void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALL
             }
 
             if (is_mouse_over_credits(mouseX, mouseY, posCredits, fontCredits)) {
-                const char* corpo_texto = "GitHub: https://github.com/JelsonJr\n"
-                    "LinkedIn: https://www.linkedin.com/in/jelson-rodrigues-53333a229/";
+                const char* command = "start https://github.com/JelsonJr/MP3-C";
 
-                al_show_native_message_box(display->screen, "Informacoes do desenvolvedor", "Onde voce pode me encontrar:", corpo_texto, NULL, ALLEGRO_MESSAGEBOX_QUESTION);
-
+                system(command);
                 continue;
             }
 
@@ -178,6 +177,7 @@ void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALL
                     play_sound(music);
                 }
 
+                option = 1;
                 break;
             }
         }
@@ -246,6 +246,8 @@ void draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALL
     al_destroy_font(fontCredits);
     al_destroy_event_queue(event_queue);
     al_destroy_timer(timer);
+
+    return option;
 }
 
 void animateButton(Display* display, ALLEGRO_COLOR buttonColor, ALLEGRO_COLOR symbolColor, float symbolSizeScale) {
