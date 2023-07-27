@@ -1,105 +1,5 @@
 #include "initial_screen.h"
 #include "mouse_location.h"
-#include <allegro5/allegro_audio.h>
-#include <allegro5/allegro_acodec.h>
-#include <dirent.h>
-
-void play_sound(const char* filepath) {
-    if (!al_reserve_samples(1)) {
-        printf("Erro ao reservar canais de áudio!\n");
-        return;
-    }
-
-    ALLEGRO_SAMPLE* audioSample = al_load_sample(filepath);
-    if (!audioSample) {
-        printf("Erro ao carregar o arquivo .wav: %s\n", filepath);
-        return;
-    }
-
-    ALLEGRO_SAMPLE_INSTANCE* instance = al_create_sample_instance(audioSample);
-    if (!instance) {
-        printf("Erro ao criar a instância de áudio!\n");
-        al_destroy_sample(audioSample);
-        return;
-    }
-
-    if (!al_attach_sample_instance_to_mixer(instance, al_get_default_mixer())) {
-        printf("Erro ao anexar a instância ao mixer!\n");
-        al_destroy_sample_instance(instance);
-        al_destroy_sample(audioSample);
-        return;
-    }
-
-    al_play_sample_instance(instance);
-
-    int teste = 0;
-    al_get_sample_instance_playing(instance);
-
-    while (al_get_sample_instance_playing(instance)) {
-        al_rest(1);
-        teste++;
-        printf("%ds ", teste);
-    }
-
-    al_destroy_sample_instance(instance);
-    al_destroy_sample(audioSample);
-}
-
-char** list_files_directory(const char* diretorio, int* num_arquivos) {
-    DIR* dir;
-    struct dirent* entrada;
-
-    dir = opendir(diretorio);
-
-    if (dir == NULL) {
-        printf("Erro ao abrir o diretório.\n");
-        *num_arquivos = 0;
-        return NULL;
-    }
-
-    char** lista_caminhos = NULL;
-    int num_caminhos = 0;
-
-    while ((entrada = readdir(dir)) != NULL) {
-        if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0)
-            continue;
-
-        char* extensao = strrchr(entrada->d_name, '.');
-        if ((extensao != NULL && strcmp(extensao, ".wav") == 0)) {
-            char caminho_absoluto[512];
-            snprintf(caminho_absoluto, sizeof(caminho_absoluto), "%s/%s", diretorio, entrada->d_name);
-
-            char** nova_lista_caminhos = (char**)realloc(lista_caminhos, (num_caminhos + 1) * sizeof(char*));
-            if (nova_lista_caminhos == NULL) {
-                printf("Erro de alocação de memória.\n");
-                closedir(dir);
-                *num_arquivos = num_caminhos;
-                return lista_caminhos;
-            }
-
-            lista_caminhos = nova_lista_caminhos;
-            lista_caminhos[num_caminhos] = (char*)malloc(strlen(caminho_absoluto) + 1);
-
-            if (lista_caminhos[num_caminhos] != NULL) {
-                strcpy_s(lista_caminhos[num_caminhos], strlen(caminho_absoluto) + 1, caminho_absoluto);
-                num_caminhos++;
-
-                continue;
-            }
-
-            printf("Erro de alocação de memória.\n");
-            closedir(dir);
-            *num_arquivos = num_caminhos;
-
-            return lista_caminhos;
-        }
-    }
-
-    closedir(dir);
-    *num_arquivos = num_caminhos;
-
-    return lista_caminhos;
-}
 
 int draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLEGRO_TIMER* timer) {
     al_set_window_title(display->screen, "MPC");
@@ -167,16 +67,6 @@ int draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLE
             }
 
             if (is_mouse_over_button(display, mouseX, mouseY, BUTTON_RADIUS)) {
-                int num_files = 0;
-
-                char** musics = list_files_directory("C:\\Users\\Jelson\\Downloads", &num_files);
-
-                for (int i = 0; i < num_files; i++) {
-                    char* music = musics[i];
-
-                    play_sound(music);
-                }
-
                 option = 1;
                 break;
             }
