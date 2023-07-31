@@ -1,7 +1,8 @@
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_native_dialog.h>
-#include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_color.h>
 #include <allegro5/allegro_font.h>
+#include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
 #include <dirent.h>
@@ -13,6 +14,7 @@
 
 #ifdef _WIN32
 #include <io.h>
+#include <Windows.h>
 #define getcwd _getcwd
 #else
 #include <unistd.h>
@@ -138,7 +140,7 @@ char** list_files_directory(const char* diretorio, int* num_arquivos) {
 		char* extensao = strrchr(entrada->d_name, '.');
 		if ((extensao != NULL && strcmp(extensao, ".wav") == 0)) {
 			char caminho_absoluto[512];
-			snprintf(caminho_absoluto, sizeof(caminho_absoluto), "%s/%s", diretorio, entrada->d_name);
+			snprintf(caminho_absoluto, sizeof(caminho_absoluto), "%s\%s", diretorio, entrada->d_name);
 
 			char** nova_lista_caminhos = (char**)realloc(lista_caminhos, (num_caminhos + 1) * sizeof(char*));
 			if (nova_lista_caminhos == NULL) {
@@ -172,6 +174,20 @@ char** list_files_directory(const char* diretorio, int* num_arquivos) {
 	return lista_caminhos;
 }
 
+const char* get_path_user() {
+	char path[MAX_PATH];
+	const char* downloads = "\\Downloads\\";
+
+	if (!GetEnvironmentVariableA("USERPROFILE", path, MAX_PATH)) {
+		printf("null\n");
+		return NULL;
+	}
+
+	strcat_s(path, MAX_PATH, downloads);
+
+	return path;
+}
+
 int main() {
 	if (!init_allegro()) {
 		return -1;
@@ -190,26 +206,50 @@ int main() {
 	int option = draw_initial_screen(displayInicial, event_queue, timer);
 	destroy_display(displayInicial);
 
-	Display* displayTeste = create_display(920, 480);
-	if (!displayTeste) {
-		return -1;
+	Display* displayTeste;
+	
+	char path[MAX_PATH];
+	const char* downloads = "\\Downloads\\";
+
+	if (!GetEnvironmentVariableA("USERPROFILE", path, MAX_PATH)) {
+		return -3;
 	}
 
-	draw_gradient(displayTeste);
+	strcat_s(path, sizeof(path), downloads);
+
 	int num_musics = 0;
-	char** musics = list_files_directory("C:\\Users\\Jelson\\Downloads", &num_musics);
+	char** musics = list_files_directory(path, &num_musics);
 
 	switch (option) {
 	case 1:
-		for (int i = 0; i < num_musics; i++) {
-			play_sound(musics[i]);
+		displayTeste = create_display(920, 480);
+		if (!displayTeste) {
+			return -1;
 		}
+
+		draw_gradient(displayTeste);
+
+		ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, 14, 0);
+
+		for (int i = 0; i < num_musics; i++) {
+			const char* music = musics[i];	
+			char* music_name = strrchr(music, '\\');
+
+			Position* pos = create_position(find_screen_center(displayTeste, font, music_name), 10 * (i + 1));
+
+			al_draw_textf(font, al_map_rgb(250, 250, 250), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", music_name);
+
+			destroy_position(pos);
+		}
+
+		al_flip_display();
+		play_sound(musics[0]);
+		destroy_display(displayTeste);
 		break;
 	default:
 		break;
 	}
 
-	destroy_display(displayTeste);
 	al_uninstall_audio();
 
 	return 0;
