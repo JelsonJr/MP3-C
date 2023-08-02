@@ -44,8 +44,8 @@ int draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLE
 
     int mouseX = 0;
     int mouseY = 0;
-    int mouseCursorDefault = 1;
     int option = 0;
+    int mouseCursorDefault = 1;
 
     while (1) {
         ALLEGRO_EVENT ev;
@@ -123,10 +123,6 @@ int draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLE
             animateButton(display, buttonColor, symbolColor, targetScale);
         }
 
-        if (ev.type == ALLEGRO_EVENT_TIMER) {
-            // Timer event
-        }
-
         if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
             break;
         }
@@ -134,6 +130,7 @@ int draw_initial_screen(Display* display, ALLEGRO_EVENT_QUEUE* event_queue, ALLE
 
     destroy_position(posCredits);
     al_destroy_font(fontCredits);
+    destroy_display(display);
     al_destroy_event_queue(event_queue);
     al_destroy_timer(timer);
 

@@ -76,28 +76,23 @@ int init_events(Display* display, ALLEGRO_EVENT_QUEUE** event_queue, ALLEGRO_TIM
 	return (*event_queue != NULL && *timer != NULL);
 }
 
-
-void play_sound(const char* filepath) {
+void play_sound(const char* filepath, Display* display) {
 	if (!al_reserve_samples(1)) {
-		printf("Erro ao reservar canais de áudio!\n");
 		return;
 	}
 
 	ALLEGRO_SAMPLE* audioSample = al_load_sample(filepath);
 	if (!audioSample) {
-		printf("Erro ao carregar o arquivo .wav: %s\n", filepath);
 		return;
 	}
 
 	ALLEGRO_SAMPLE_INSTANCE* instance = al_create_sample_instance(audioSample);
 	if (!instance) {
-		printf("Erro ao criar a instância de áudio!\n");
 		al_destroy_sample(audioSample);
 		return;
 	}
 
 	if (!al_attach_sample_instance_to_mixer(instance, al_get_default_mixer())) {
-		printf("Erro ao anexar a instância ao mixer!\n");
 		al_destroy_sample_instance(instance);
 		al_destroy_sample(audioSample);
 		return;
@@ -105,77 +100,40 @@ void play_sound(const char* filepath) {
 
 	al_play_sample_instance(instance);
 
-	int teste = 0;
+	int seconds = 0;
 	al_get_sample_instance_playing(instance);
+
+	ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, 14, 0);
+	Position* pos = create_position(find_screen_center(display, font, "00:00"), 400);
 
 	while (al_get_sample_instance_playing(instance)) {
 		al_rest(1);
-		teste++;
-		printf("%ds ", teste);
+		seconds++;
+
+		int minutes = seconds / 60;
+		int remaining_seconds = seconds % 60;
+
+		char time_str[10];
+		snprintf(time_str, sizeof(time_str), "%02d:%02d", minutes, remaining_seconds);
+
+		int rect_width = 50;
+		int rect_height = 25;
+		al_draw_filled_rectangle(pos->x - 10, pos->y - 5, pos->x + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
+
+		al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", time_str);
+		al_flip_display();
 	}
 
 	al_destroy_sample_instance(instance);
 	al_destroy_sample(audioSample);
 }
 
-char** list_files_directory(const char* diretorio, int* num_arquivos) {
-	DIR* dir;
-	struct dirent* entrada;
-
-	dir = opendir(diretorio);
-
-	if (dir == NULL) {
-		printf("Erro ao abrir o diretório.\n");
-		*num_arquivos = 0;
+const char* get_path_user() {
+	char* path = (char*)malloc(MAX_PATH);
+	if (!path) {
 		return NULL;
 	}
 
-	char** lista_caminhos = NULL;
-	int num_caminhos = 0;
-
-	while ((entrada = readdir(dir)) != NULL) {
-		if (strcmp(entrada->d_name, ".") == 0 || strcmp(entrada->d_name, "..") == 0)
-			continue;
-
-		char* extensao = strrchr(entrada->d_name, '.');
-		if ((extensao != NULL && strcmp(extensao, ".wav") == 0)) {
-			char caminho_absoluto[512];
-			snprintf(caminho_absoluto, sizeof(caminho_absoluto), "%s\%s", diretorio, entrada->d_name);
-
-			char** nova_lista_caminhos = (char**)realloc(lista_caminhos, (num_caminhos + 1) * sizeof(char*));
-			if (nova_lista_caminhos == NULL) {
-				printf("Erro de alocação de memória.\n");
-				closedir(dir);
-				*num_arquivos = num_caminhos;
-				return lista_caminhos;
-			}
-
-			lista_caminhos = nova_lista_caminhos;
-			lista_caminhos[num_caminhos] = (char*)malloc(strlen(caminho_absoluto) + 1);
-
-			if (lista_caminhos[num_caminhos] != NULL) {
-				strcpy_s(lista_caminhos[num_caminhos], strlen(caminho_absoluto) + 1, caminho_absoluto);
-				num_caminhos++;
-
-				continue;
-			}
-
-			printf("Erro de alocação de memória.\n");
-			closedir(dir);
-			*num_arquivos = num_caminhos;
-
-			return lista_caminhos;
-		}
-	}
-
-	closedir(dir);
-	*num_arquivos = num_caminhos;
-
-	return lista_caminhos;
-}
-
-const char* get_path_user() {
-	char path[MAX_PATH];
 	const char* downloads = "\\Downloads\\";
 
 	if (!GetEnvironmentVariableA("USERPROFILE", path, MAX_PATH)) {
@@ -188,63 +146,121 @@ const char* get_path_user() {
 	return path;
 }
 
+char** list_files_directory(int* num_files) {
+	const char* directory = get_path_user();
+	if (!directory) {
+		free(directory);
+
+		return NULL;
+	}
+
+	DIR* dir;
+	struct dirent* entry;
+
+	dir = opendir(directory);
+
+	if (dir == NULL) {
+		free(directory);
+		*num_files = 0;
+
+		return NULL;
+	}
+
+	char** paths_list = NULL;
+	int num_paths = 0;
+
+	while ((entry = readdir(dir)) != NULL) {
+		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+			continue;
+
+		char* extension = strrchr(entry->d_name, '.');
+		if ((extension != NULL && strcmp(extension, ".wav") == 0)) {
+			char absolute_path[512];
+			snprintf(absolute_path, sizeof(absolute_path), "%s\%s", directory, entry->d_name);
+
+			char** new_paths_list = (char**)realloc(paths_list, (num_paths + 1) * sizeof(char*));
+			if (new_paths_list == NULL) {
+				closedir(dir);
+
+				free(directory);
+				*num_files = num_paths;
+
+				return paths_list;
+			}
+
+			paths_list = new_paths_list;
+			paths_list[num_paths] = (char*)malloc(strlen(absolute_path) + 1);
+
+			if (paths_list[num_paths] != NULL) {
+				strcpy_s(paths_list[num_paths], strlen(absolute_path) + 1, absolute_path);
+				num_paths++;
+
+				continue;
+			}
+
+			closedir(dir);
+			free(directory);
+			*num_files = num_paths;
+
+			return paths_list;
+		}
+	}
+
+	closedir(dir);
+	free(directory);
+	*num_files = num_paths;
+
+	return paths_list;
+}
+
 int main() {
 	if (!init_allegro()) {
 		return -1;
 	}
 
-	Display* displayInicial = create_display(720, 480);
-	if (!displayInicial) {
+	int num_musics = 0;
+	char** musics = list_files_directory(&num_musics);
+
+	Display* mainDisplay;
+	Display* initialDisplay = create_display(720, 480);
+	
+	if (!initialDisplay) {
 		return -1;
 	}
 
 	ALLEGRO_EVENT_QUEUE* event_queue = NULL;
 	ALLEGRO_TIMER* timer = NULL;
+	init_events(initialDisplay, &event_queue, &timer);
 
-	init_events(displayInicial, &event_queue, &timer);
-
-	int option = draw_initial_screen(displayInicial, event_queue, timer);
-	destroy_display(displayInicial);
-
-	Display* displayTeste;
+	int option = draw_initial_screen(initialDisplay, event_queue, timer);
 	
-	char path[MAX_PATH];
-	const char* downloads = "\\Downloads\\";
-
-	if (!GetEnvironmentVariableA("USERPROFILE", path, MAX_PATH)) {
-		return -3;
-	}
-
-	strcat_s(path, sizeof(path), downloads);
-
-	int num_musics = 0;
-	char** musics = list_files_directory(path, &num_musics);
-
 	switch (option) {
 	case 1:
-		displayTeste = create_display(920, 480);
-		if (!displayTeste) {
+		mainDisplay = create_display(920, 480);
+		if (!mainDisplay) {
 			return -1;
 		}
 
-		draw_gradient(displayTeste);
+		draw_gradient(mainDisplay);
 
-		ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, 14, 0);
+		int text_height = 14;
+		int space_between_music = 10;
+		ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, text_height, 0);
 
 		for (int i = 0; i < num_musics; i++) {
 			const char* music = musics[i];	
-			char* music_name = strrchr(music, '\\');
-
-			Position* pos = create_position(find_screen_center(displayTeste, font, music_name), 10 * (i + 1));
-
+			char* music_name = strrchr(music, '\\') + 1;
+					
+			Position* pos = create_position(find_screen_center(mainDisplay, font, music_name), i * (text_height + space_between_music));
 			al_draw_textf(font, al_map_rgb(250, 250, 250), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", music_name);
 
 			destroy_position(pos);
 		}
 
 		al_flip_display();
-		play_sound(musics[0]);
-		destroy_display(displayTeste);
+		play_sound(musics[0], mainDisplay);
+		destroy_display(mainDisplay);
+
 		break;
 	default:
 		break;

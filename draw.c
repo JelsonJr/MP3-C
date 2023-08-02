@@ -21,8 +21,7 @@ void draw_gradient(Display* display) {
 }
 
 void draw_text(ALLEGRO_FONT* font, Position* pos, ALLEGRO_COLOR color,
-    char* text, char* format, int flags)
-{
+    char* text, char* format, int flags) {
     al_draw_textf(font, color, pos->x, pos->y, flags, format, text);
 
     al_destroy_font(font);

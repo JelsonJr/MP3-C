@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <stdbool.h>
 #include <string.h> 
 #include <Windows.h>
 
-bool is_directory(const char* path) {
+int is_directory(const char* path) {
     struct stat path_stat;
     stat(path, &path_stat);
 
