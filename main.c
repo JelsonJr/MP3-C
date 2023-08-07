@@ -5,6 +5,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
+#include <allegro5/allegro_image.h>
 #include <dirent.h>
 #include "display.h"
 #include "position.h"
@@ -56,6 +57,11 @@ int init_allegro() {
 		return 0;
 	}
 
+	if (!al_init_image_addon()) {
+		al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de Imagem", "Falha ao inicializar add-on de imagens.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+		return 0;
+	}
+
 	if (!al_init_acodec_addon()) {
 		al_show_native_message_box(NULL, "Erro", "Inicializa\xc3\xa7\xc3\xa3o de \u00E1udio", "Falha ao inicializar add-on de \u00E1udio.", NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		al_uninstall_audio();
@@ -104,7 +110,20 @@ void play_sound(const char* filepath, Display* display) {
 	al_get_sample_instance_playing(instance);
 
 	ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, 14, 0);
-	Position* pos = create_position(find_screen_center(display, font, "00:00"), 400);
+	Position* pos = create_position(find_screen_center(display, font, "444:444"), 420);
+
+	ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(filepath, 4, 2048);
+	if (!audioStream) {
+		printf("erro de audio stream");
+		return -1;
+	}
+
+	double durationInSeconds = al_get_audio_stream_length_secs(audioStream);
+
+	al_drain_audio_stream(audioStream);
+	al_destroy_audio_stream(audioStream);
+
+	double totalSeconds = durationInSeconds;
 
 	while (al_get_sample_instance_playing(instance)) {
 		al_rest(1);
@@ -113,14 +132,18 @@ void play_sound(const char* filepath, Display* display) {
 		int minutes = seconds / 60;
 		int remaining_seconds = seconds % 60;
 
-		char time_str[10];
-		snprintf(time_str, sizeof(time_str), "%02d:%02d", minutes, remaining_seconds);
+		char time_str[20];
+		snprintf(time_str, sizeof(time_str), "%02d:%02d | %02d:%02d", minutes, remaining_seconds, (int)durationInSeconds / 60, (int)durationInSeconds % 60);
 
-		int rect_width = 50;
+		int rect_width = 120;
 		int rect_height = 25;
-		al_draw_filled_rectangle(pos->x - 10, pos->y - 5, pos->x + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
 
+		al_draw_filled_rectangle(pos->x - 10, pos->y, pos->x + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
 		al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", time_str);
+
+		double progress = (seconds / totalSeconds) * rect_width;
+		al_draw_filled_rectangle(pos->x - 10, pos->y + rect_height + 5, pos->x - 10 + progress, pos->y + rect_height + 10, al_map_rgb(0, 0, 255));
+
 		al_flip_display();
 	}
 
@@ -242,6 +265,37 @@ int main() {
 		}
 
 		draw_gradient(mainDisplay);
+		al_draw_filled_rectangle(0, 400, 920, 480, al_map_rgb(255, 255, 255));
+
+		ALLEGRO_BITMAP* nextReturnImage = al_load_bitmap("./static/return-next.png");
+		ALLEGRO_BITMAP* startEndImage = al_load_bitmap("./static/start-end.png");
+		if (nextReturnImage && startEndImage) {
+			int img_width = al_get_bitmap_width(nextReturnImage);
+			int img_height = al_get_bitmap_height(nextReturnImage);
+			
+			int img_width_initEnd = al_get_bitmap_width(startEndImage);
+			int img_height_initEnd = al_get_bitmap_height(startEndImage);
+
+			float scale_factor = 0.25;
+			
+			int new_img_width = img_width * scale_factor;
+			int new_img_height = img_height * scale_factor;
+			
+			int new_img_width_initEnd = img_width * scale_factor;
+			int new_img_height_initEnd = img_height * scale_factor;
+
+			int center_x = 300;
+			int center_y = 420;
+
+			al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) -  center_x, center_y, new_img_width, new_img_height, 0);
+			al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) + center_x, center_y, -new_img_width, new_img_height, 0);
+
+			al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) - 230, center_y, new_img_width_initEnd, new_img_height_initEnd, 0);
+			al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) + 230, center_y, -new_img_width_initEnd, new_img_height_initEnd, 0);
+			
+			al_destroy_bitmap(startEndImage);
+			al_destroy_bitmap(nextReturnImage);
+		}
 
 		int text_height = 14;
 		int space_between_music = 10;
@@ -251,7 +305,7 @@ int main() {
 			const char* music = musics[i];	
 			char* music_name = strrchr(music, '\\') + 1;
 					
-			Position* pos = create_position(find_screen_center(mainDisplay, font, music_name), i * (text_height + space_between_music));
+			Position* pos = create_position(320, i * (text_height + space_between_music));
 			al_draw_textf(font, al_map_rgb(250, 250, 250), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", music_name);
 
 			destroy_position(pos);
