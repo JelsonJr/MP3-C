@@ -158,6 +158,7 @@
     <ClInclude Include="initial_screen.h" />
     <ClInclude Include="mouse_location.h" />
     <ClInclude Include="position.h" />
+    <ClInclude Include="thread.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,7 @@
 #include "draw.h"
 #include "fonts.h"
 #include "initial_screen.h"
+#include "thread.h"
 
 #ifdef _WIN32
 #include <io.h>
@@ -20,6 +21,9 @@
 #else
 #include <unistd.h>
 #endif
+
+#define boolean int
+boolean music_done = 0;
 
 int init_allegro() {
 	if (!al_init()) {
@@ -82,7 +86,13 @@ int init_events(Display* display, ALLEGRO_EVENT_QUEUE** event_queue, ALLEGRO_TIM
 	return (*event_queue != NULL && *timer != NULL);
 }
 
-void play_sound(const char* filepath, Display* display) {
+DWORD WINAPI play_sound(LPVOID arg) {
+	ThreadArguments* arguments = (ThreadArguments*)arg;
+
+	Display* display = arguments->display;
+	const char* filepath = arguments->filepath;
+
+
 	if (!al_reserve_samples(1)) {
 		return;
 	}
@@ -106,49 +116,13 @@ void play_sound(const char* filepath, Display* display) {
 
 	al_play_sample_instance(instance);
 
-	int seconds = 0;
-	al_get_sample_instance_playing(instance);
-
-	ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, 14, 0);
-	Position* pos = create_position(find_screen_center(display, font, "444:444"), 420);
-
-	ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(filepath, 4, 2048);
-	if (!audioStream) {
-		printf("erro de audio stream");
-		return -1;
-	}
-
-	double durationInSeconds = al_get_audio_stream_length_secs(audioStream);
-
-	al_drain_audio_stream(audioStream);
-	al_destroy_audio_stream(audioStream);
-
-	double totalSeconds = durationInSeconds;
-
 	while (al_get_sample_instance_playing(instance)) {
 		al_rest(1);
-		seconds++;
-
-		int minutes = seconds / 60;
-		int remaining_seconds = seconds % 60;
-
-		char time_str[20];
-		snprintf(time_str, sizeof(time_str), "%02d:%02d | %02d:%02d", minutes, remaining_seconds, (int)durationInSeconds / 60, (int)durationInSeconds % 60);
-
-		int rect_width = 120;
-		int rect_height = 25;
-
-		al_draw_filled_rectangle(pos->x - 10, pos->y, pos->x + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
-		al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", time_str);
-
-		double progress = (seconds / totalSeconds) * rect_width;
-		al_draw_filled_rectangle(pos->x - 10, pos->y + rect_height + 5, pos->x - 10 + progress, pos->y + rect_height + 10, al_map_rgb(0, 0, 255));
-
-		al_flip_display();
 	}
 
 	al_destroy_sample_instance(instance);
 	al_destroy_sample(audioSample);
+	music_done = 1;
 }
 
 const char* get_path_user() {
@@ -160,7 +134,6 @@ const char* get_path_user() {
 	const char* downloads = "\\Downloads\\";
 
 	if (!GetEnvironmentVariableA("USERPROFILE", path, MAX_PATH)) {
-		printf("null\n");
 		return NULL;
 	}
 
@@ -255,7 +228,7 @@ int main() {
 	ALLEGRO_TIMER* timer = NULL;
 	init_events(initialDisplay, &event_queue, &timer);
 
-	int option = draw_initial_screen(initialDisplay, event_queue, timer);
+	int option = initial_screen(initialDisplay, event_queue, timer);
 	
 	switch (option) {
 	case 1:
@@ -312,7 +285,57 @@ int main() {
 		}
 
 		al_flip_display();
-		play_sound(musics[0], mainDisplay);
+
+		ThreadArguments* arguments = malloc(sizeof(ThreadArguments*));
+		if (arguments == NULL) return -8;
+
+		arguments->display = mainDisplay;
+		arguments->filepath = musics[0];
+
+		HANDLE sound_thread = CreateThread(NULL, 0, play_sound, arguments, 0, NULL);
+		if (sound_thread == NULL) {
+			return -1;
+		}
+
+		int seconds = 0;
+
+		font = al_load_font(MONTSERRAT_BOLD, 14, 0);
+		Position* pos = create_position(find_screen_center(arguments->display, font, "444:444"), 420);
+
+		ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
+		if (!audioStream) {
+			return -1;
+		}
+
+		double durationInSeconds = al_get_audio_stream_length_secs(audioStream);
+
+		al_drain_audio_stream(audioStream);
+		al_destroy_audio_stream(audioStream);
+
+		double totalSeconds = durationInSeconds;
+
+		while (!music_done) {
+			al_rest(1);
+			seconds++;
+
+			int minutes = seconds / 60;
+			int remaining_seconds = seconds % 60;
+
+			char time_str[20];
+			snprintf(time_str, sizeof(time_str), "%02d:%02d | %02d:%02d", minutes, remaining_seconds, (int)durationInSeconds / 60, (int)durationInSeconds % 60);
+
+			int rect_width = 120;
+			int rect_height = 25;
+
+			al_draw_filled_rectangle(pos->x - 10, pos->y, pos->x + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
+			al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", time_str);
+
+			double progress = (seconds / totalSeconds) * rect_width;
+			al_draw_filled_rectangle(pos->x - 10, pos->y + rect_height + 5, pos->x - 10 + progress, pos->y + rect_height + 10, al_map_rgb(0, 0, 255));
+
+			al_flip_display();
+		}
+
 		destroy_display(mainDisplay);
 
 		break;
