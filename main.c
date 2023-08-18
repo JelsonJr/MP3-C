@@ -14,6 +14,7 @@
 #include "initial_screen.h"
 #include "thread.h"
 #include "music_menu.h"
+#include "music.h"
 
 #ifdef _WIN32
 	#include <io.h>
@@ -84,126 +85,6 @@ int init_events(Display* display, ALLEGRO_EVENT_QUEUE** event_queue, ALLEGRO_TIM
 	return (*event_queue != NULL && *timer != NULL);
 }
 
-DWORD WINAPI play_sound(LPVOID arg) {
-	ThreadArguments* arguments = (ThreadArguments*)arg;
-
-	Display* display = arguments->display;
-	const char* filepath = arguments->filepath;
-
-	if (!al_reserve_samples(1)) {
-		return;
-	}
-
-	ALLEGRO_SAMPLE* audioSample = al_load_sample(filepath);
-	if (!audioSample) {
-		return;
-	}
-
-	ALLEGRO_SAMPLE_INSTANCE* instance = al_create_sample_instance(audioSample);
-	if (!instance) {
-		al_destroy_sample(audioSample);
-		return;
-	}
-
-	if (!al_attach_sample_instance_to_mixer(instance, al_get_default_mixer())) {
-		al_destroy_sample_instance(instance);
-		al_destroy_sample(audioSample);
-		return;
-	}
-
-	al_play_sample_instance(instance);
-
-	while (al_get_sample_instance_playing(instance)) {}
-
-	al_destroy_sample_instance(instance);
-	al_destroy_sample(audioSample);
-	arguments->done = 1;
-}
-
-const char* get_path_user() {
-	char* path = (char*)malloc(MAX_PATH);
-	if (!path) {
-		return NULL;
-	}
-
-	const char* downloads = "\\Downloads\\";
-
-	if (!GetEnvironmentVariableA("USERPROFILE", path, MAX_PATH)) {
-		return NULL;
-	}
-
-	strcat_s(path, MAX_PATH, downloads);
-
-	return path;
-}
-
-char** list_files_directory(int* num_files) {
-	const char* directory = get_path_user();
-	if (!directory) {
-		free(directory);
-
-		return NULL;
-	}
-
-	DIR* dir;
-	struct dirent* entry;
-
-	dir = opendir(directory);
-
-	if (dir == NULL) {
-		free(directory);
-		*num_files = 0;
-
-		return NULL;
-	}
-
-	char** paths_list = NULL;
-	int num_paths = 0;
-
-	while ((entry = readdir(dir)) != NULL) {
-		if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
-			continue;
-
-		char* extension = strrchr(entry->d_name, '.');
-		if ((extension != NULL && strcmp(extension, ".wav") == 0)) {
-			char absolute_path[512];
-			snprintf(absolute_path, sizeof(absolute_path), "%s\%s", directory, entry->d_name);
-
-			char** new_paths_list = (char**)realloc(paths_list, (num_paths + 1) * sizeof(char*));
-			if (new_paths_list == NULL) {
-				closedir(dir);
-
-				free(directory);
-				*num_files = num_paths;
-
-				return paths_list;
-			}
-
-			paths_list = new_paths_list;
-			paths_list[num_paths] = (char*)malloc(strlen(absolute_path) + 1);
-
-			if (paths_list[num_paths] != NULL) {
-				strcpy_s(paths_list[num_paths], strlen(absolute_path) + 1, absolute_path);
-				num_paths++;
-
-				continue;
-			}
-
-			closedir(dir);
-			free(directory);
-			*num_files = num_paths;
-
-			return paths_list;
-		}
-	}
-
-	closedir(dir);
-	free(directory);
-	*num_files = num_paths;
-
-	return paths_list;
-}
-
 int main() {
 	if (!init_allegro()) {
 		return -1;
@@ -233,36 +114,7 @@ int main() {
 		}
 
 		init_events(mainDisplay, &event_queue, &timer);
-		music_menu(mainDisplay, num_musics, musics);
-
-		ThreadArguments* arguments = create_thread(mainDisplay, musics[0]);
-
-		HANDLE sound_thread = CreateThread(NULL, 0, play_sound, arguments, 0, NULL);
-		if (sound_thread == NULL) {
-			return -1;
-		}
-
-		ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
-		if (!audioStream) {
-			return -1;
-		}
-
-		ALLEGRO_FONT* font_timer = al_load_font(MONTSERRAT_BOLD, 14, 0);
-		Position* pos_timer = create_position(find_screen_center(arguments->display, font_timer, "444:444"), 420);
-
-		unsigned int seconds = 0;
-
-		while (!arguments->done) {
-			al_rest(1);
-			draw_music_timer(seconds, audioStream, arguments->display, font_timer, pos_timer);
-			seconds++;
-		}
-
-		al_drain_audio_stream(audioStream);
-		al_destroy_audio_stream(audioStream);
-		al_destroy_event_queue(event_queue);
-		al_destroy_timer(timer);
-		destroy_display(mainDisplay);
+		music_menu(mainDisplay, num_musics, musics, event_queue, timer);
 
 		break;
 	default:
