@@ -147,6 +147,7 @@
     <ClCompile Include="initial_screen.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="mouse_location.c" />
+    <ClCompile Include="music_menu.c" />
     <ClCompile Include="position.c" />
     <ClCompile Include="thread.c" />
     <ClCompile Include="util.c" />
@@ -157,6 +158,7 @@
     <ClInclude Include="fonts.h" />
     <ClInclude Include="initial_screen.h" />
     <ClInclude Include="mouse_location.h" />
+    <ClInclude Include="music_menu.h" />
     <ClInclude Include="position.h" />
     <ClInclude Include="thread.h" />
     <ClInclude Include="util.h" />

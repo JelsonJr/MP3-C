@@ -13,17 +13,15 @@
 #include "fonts.h"
 #include "initial_screen.h"
 #include "thread.h"
+#include "music_menu.h"
 
 #ifdef _WIN32
-#include <io.h>
-#include <Windows.h>
-#define getcwd _getcwd
+	#include <io.h>
+	#include <Windows.h>
+	#define getcwd _getcwd
 #else
-#include <unistd.h>
+	#include <unistd.h>
 #endif
-
-#define boolean int
-boolean music_done = 0;
 
 int init_allegro() {
 	if (!al_init()) {
@@ -92,7 +90,6 @@ DWORD WINAPI play_sound(LPVOID arg) {
 	Display* display = arguments->display;
 	const char* filepath = arguments->filepath;
 
-
 	if (!al_reserve_samples(1)) {
 		return;
 	}
@@ -116,13 +113,11 @@ DWORD WINAPI play_sound(LPVOID arg) {
 
 	al_play_sample_instance(instance);
 
-	while (al_get_sample_instance_playing(instance)) {
-		al_rest(1);
-	}
+	while (al_get_sample_instance_playing(instance)) {}
 
 	al_destroy_sample_instance(instance);
 	al_destroy_sample(audioSample);
-	music_done = 1;
+	arguments->done = 1;
 }
 
 const char* get_path_user() {
@@ -237,105 +232,36 @@ int main() {
 			return -1;
 		}
 
-		draw_gradient(mainDisplay);
-		al_draw_filled_rectangle(0, 400, 920, 480, al_map_rgb(255, 255, 255));
+		init_events(mainDisplay, &event_queue, &timer);
+		music_menu(mainDisplay, num_musics, musics);
 
-		ALLEGRO_BITMAP* nextReturnImage = al_load_bitmap("./static/return-next.png");
-		ALLEGRO_BITMAP* startEndImage = al_load_bitmap("./static/start-end.png");
-		if (nextReturnImage && startEndImage) {
-			int img_width = al_get_bitmap_width(nextReturnImage);
-			int img_height = al_get_bitmap_height(nextReturnImage);
-			
-			int img_width_initEnd = al_get_bitmap_width(startEndImage);
-			int img_height_initEnd = al_get_bitmap_height(startEndImage);
-
-			float scale_factor = 0.25;
-			
-			int new_img_width = img_width * scale_factor;
-			int new_img_height = img_height * scale_factor;
-			
-			int new_img_width_initEnd = img_width * scale_factor;
-			int new_img_height_initEnd = img_height * scale_factor;
-
-			int center_x = 300;
-			int center_y = 420;
-
-			al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) -  center_x, center_y, new_img_width, new_img_height, 0);
-			al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) + center_x, center_y, -new_img_width, new_img_height, 0);
-
-			al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) - 230, center_y, new_img_width_initEnd, new_img_height_initEnd, 0);
-			al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) + 230, center_y, -new_img_width_initEnd, new_img_height_initEnd, 0);
-			
-			al_destroy_bitmap(startEndImage);
-			al_destroy_bitmap(nextReturnImage);
-		}
-
-		int text_height = 14;
-		int space_between_music = 10;
-		ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, text_height, 0);
-
-		for (int i = 0; i < num_musics; i++) {
-			const char* music = musics[i];	
-			char* music_name = strrchr(music, '\\') + 1;
-					
-			Position* pos = create_position(320, i * (text_height + space_between_music));
-			al_draw_textf(font, al_map_rgb(250, 250, 250), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", music_name);
-
-			destroy_position(pos);
-		}
-
-		al_flip_display();
-
-		ThreadArguments* arguments = malloc(sizeof(ThreadArguments*));
-		if (arguments == NULL) return -8;
-
-		arguments->display = mainDisplay;
-		arguments->filepath = musics[0];
+		ThreadArguments* arguments = create_thread(mainDisplay, musics[0]);
 
 		HANDLE sound_thread = CreateThread(NULL, 0, play_sound, arguments, 0, NULL);
 		if (sound_thread == NULL) {
 			return -1;
 		}
 
-		int seconds = 0;
-
-		font = al_load_font(MONTSERRAT_BOLD, 14, 0);
-		Position* pos = create_position(find_screen_center(arguments->display, font, "444:444"), 420);
-
 		ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
 		if (!audioStream) {
 			return -1;
 		}
 
-		double durationInSeconds = al_get_audio_stream_length_secs(audioStream);
+		ALLEGRO_FONT* font_timer = al_load_font(MONTSERRAT_BOLD, 14, 0);
+		Position* pos_timer = create_position(find_screen_center(arguments->display, font_timer, "444:444"), 420);
+
+		unsigned int seconds = 0;
+
+		while (!arguments->done) {
+			al_rest(1);
+			draw_music_timer(seconds, audioStream, arguments->display, font_timer, pos_timer);
+			seconds++;
+		}
 
 		al_drain_audio_stream(audioStream);
 		al_destroy_audio_stream(audioStream);
-
-		double totalSeconds = durationInSeconds;
-
-		while (!music_done) {
-			al_rest(1);
-			seconds++;
-
-			int minutes = seconds / 60;
-			int remaining_seconds = seconds % 60;
-
-			char time_str[20];
-			snprintf(time_str, sizeof(time_str), "%02d:%02d | %02d:%02d", minutes, remaining_seconds, (int)durationInSeconds / 60, (int)durationInSeconds % 60);
-
-			int rect_width = 120;
-			int rect_height = 25;
-
-			al_draw_filled_rectangle(pos->x - 10, pos->y, pos->x + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
-			al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", time_str);
-
-			double progress = (seconds / totalSeconds) * rect_width;
-			al_draw_filled_rectangle(pos->x - 10, pos->y + rect_height + 5, pos->x - 10 + progress, pos->y + rect_height + 10, al_map_rgb(0, 0, 255));
-
-			al_flip_display();
-		}
-
+		al_destroy_event_queue(event_queue);
+		al_destroy_timer(timer);
 		destroy_display(mainDisplay);
 
 		break;
