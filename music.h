@@ -21,4 +21,4 @@
 
 char** list_files_directory(int* num_files);
 const char* get_path_user();
-DWORD WINAPI play_sound(LPVOID arg);
+void* play_sound(ALLEGRO_THREAD* thread, void* arg);

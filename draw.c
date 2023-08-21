@@ -46,7 +46,7 @@ void draw_musics_list(int num_musics, char** musics) {
     al_flip_display();
 }
 
-void draw_music_timer(int seconds, ALLEGRO_AUDIO_STREAM* audioStream, Display* display, ALLEGRO_FONT* font, Position* pos) {
+void draw_music_timer(int seconds, ALLEGRO_AUDIO_STREAM* audioStream, ALLEGRO_FONT* font, Position* pos) {
     double durationInSeconds = al_get_audio_stream_length_secs(audioStream);
     double totalSeconds = durationInSeconds;
 

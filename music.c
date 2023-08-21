@@ -1,16 +1,13 @@
 #include "music.h"
 
-DWORD WINAPI play_sound(LPVOID arg) {
+void* play_sound(ALLEGRO_THREAD* thread, void* arg) {
 	ThreadArguments* arguments = (ThreadArguments*)arg;
-
-	Display* display = arguments->display;
-	const char* filepath = arguments->filepath;
 
 	if (!al_reserve_samples(1)) {
 		return;
 	}
 
-	ALLEGRO_SAMPLE* audioSample = al_load_sample(filepath);
+	ALLEGRO_SAMPLE* audioSample = al_load_sample(arguments->filepath);
 	if (!audioSample) {
 		return;
 	}
@@ -29,8 +26,11 @@ DWORD WINAPI play_sound(LPVOID arg) {
 
 	al_play_sample_instance(instance);
 
-	while (al_get_sample_instance_playing(instance)) {}
-
+	while (al_get_sample_instance_playing(instance) && !arguments->done) {
+		al_rest(1);
+		arguments->seconds++;
+	}
+	
 	al_destroy_sample_instance(instance);
 	al_destroy_sample(audioSample);
 

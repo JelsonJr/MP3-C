@@ -11,7 +11,7 @@
 typedef struct {
 	const char* filepath;
 	int* done;
-	Display* display;
+	int seconds;
 } ThreadArguments;
 
-ThreadArguments* create_thread(Display* display, const char* string);
+ThreadArguments* create_thread(const char* string);
