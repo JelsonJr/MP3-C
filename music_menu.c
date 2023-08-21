@@ -3,7 +3,7 @@
 int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QUEUE* event_queue, ALLEGRO_TIMER* timer) {
 	draw_gradient(display);
 	al_draw_filled_rectangle(0, 400, 920, 480, al_map_rgb(255, 255, 255));
-
+	
 	ALLEGRO_BITMAP* nextReturnImage = al_load_bitmap("./static/return-next.png");
 	ALLEGRO_BITMAP* startEndImage = al_load_bitmap("./static/start-end.png");
 	if (nextReturnImage && startEndImage) {
@@ -46,18 +46,20 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 	ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
 	ALLEGRO_FONT* font_timer = al_load_font(MONTSERRAT_BOLD, 14, 0);
 	Position* pos_timer = create_position(find_screen_center(display, font_timer, "444:444"), 420);
+	
+	al_start_timer(timer);
 
 	while (1) {
-		if (musicPlaying) {
-			draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
-		}
-		
 		ALLEGRO_EVENT ev;
 		al_wait_for_event(event_queue, &ev);
 
 		mousePosition->x = ev.mouse.x;
 		mousePosition->y = ev.mouse.y;
-	
+		
+		if (ev.type == ALLEGRO_EVENT_TIMER && musicPlaying) {
+			draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
+		}
+
 		if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && !musicPlaying) {
 			sound_thread = al_create_thread(play_sound, arguments);
 			al_start_thread(sound_thread);
