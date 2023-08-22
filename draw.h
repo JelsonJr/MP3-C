@@ -15,3 +15,5 @@ void draw_text(ALLEGRO_FONT* font, Position* pos, ALLEGRO_COLOR color,
 void draw_music_timer(int seconds, ALLEGRO_AUDIO_STREAM* audioStream, 
     ALLEGRO_FONT* font, Position* pos);
 void draw_musics_list(int num_musics, char** musics);
+void draw_buttons();
+void draw_play_pause_button(int playOrPause);

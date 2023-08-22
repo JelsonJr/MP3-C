@@ -24,6 +24,10 @@ void* play_sound(ALLEGRO_THREAD* thread, void* arg) {
 		return;
 	}
 
+	int sampleRate = al_get_sample_instance_frequency(instance);
+	int newPosition = arguments->seconds * sampleRate;
+
+	al_set_sample_instance_position(instance, newPosition);
 	al_play_sample_instance(instance);
 
 	while (al_get_sample_instance_playing(instance) && !arguments->done) {

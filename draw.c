@@ -48,22 +48,102 @@ void draw_musics_list(int num_musics, char** musics) {
 
 void draw_music_timer(int seconds, ALLEGRO_AUDIO_STREAM* audioStream, ALLEGRO_FONT* font, Position* pos) {
     double durationInSeconds = al_get_audio_stream_length_secs(audioStream);
-    double totalSeconds = durationInSeconds;
 
     int minutes = seconds / 60;
     int remaining_seconds = seconds % 60;
 
-    char time_str[20];
-    snprintf(time_str, sizeof(time_str), "%02d:%02d | %02d:%02d", minutes, remaining_seconds, (int)durationInSeconds / 60, (int)durationInSeconds % 60);
+    char current_time[6];
+    char total_time[6];
+    
+    snprintf(current_time, sizeof(current_time), "%02d:%02d", minutes, remaining_seconds);
+    snprintf(total_time, sizeof(total_time), "%02d:%02d", (int)durationInSeconds / 60, (int)durationInSeconds % 60);
 
-    int rect_width = 120;
-    int rect_height = 25;
+    int rect_width = 44;
+    int rect_height = 20;
 
-    al_draw_filled_rectangle(pos->x - 10, pos->y, pos->x + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
-    al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", time_str);
+    al_draw_filled_rectangle(pos->x - 140, pos->y, (pos->x - 140) + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
+    al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x - 140, pos->y, ALLEGRO_ALIGN_LEFT, "%s", current_time);
 
-    double progress = (seconds / totalSeconds) * rect_width;
-    al_draw_filled_rectangle(pos->x - 10, pos->y + rect_height + 5, pos->x - 10 + progress, pos->y + rect_height + 10, al_map_rgb(0, 0, 255));
+    al_draw_filled_rectangle(pos->x + 160, pos->y, (pos->x + 160) + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
+    al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x + 160, pos->y, ALLEGRO_ALIGN_LEFT, "%s", total_time);
+
+    double porcentagem = (int)durationInSeconds  % 100;
+    double progress = (durationInSeconds / 200) * porcentagem;
+
+    printf("%f ", (durationInSeconds / 200));
+    al_draw_filled_rectangle(pos->x - 90, pos->y + 7, pos->x - 90 + progress, pos->y + 12, al_map_rgb(0, 0, 255));
+
+    al_flip_display();
+}
+
+void draw_buttons() {
+    ALLEGRO_BITMAP* nextReturnImage = al_load_bitmap("./static/return-next.png");
+    ALLEGRO_BITMAP* startEndImage = al_load_bitmap("./static/start-end.png");
+
+    if (nextReturnImage == NULL || startEndImage == NULL) {
+        return;
+    }
+
+    int img_width = al_get_bitmap_width(nextReturnImage);
+    int img_height = al_get_bitmap_height(nextReturnImage);
+
+    int img_width_initEnd = al_get_bitmap_width(startEndImage);
+    int img_height_initEnd = al_get_bitmap_height(startEndImage);
+
+    float scale_factor = 0.25;
+
+    int new_img_width = img_width * scale_factor;
+    int new_img_height = img_height * scale_factor;
+
+    int new_img_width_initEnd = img_width * scale_factor;
+    int new_img_height_initEnd = img_height * scale_factor;
+
+    int center_x = 300;
+    int center_y = 420;
+
+    al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) - center_x, center_y, new_img_width, new_img_height, 0);
+    al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) + center_x, center_y, -new_img_width, new_img_height, 0);
+
+    al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) - 230, center_y, new_img_width_initEnd, new_img_height_initEnd, 0);
+    al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) + 230, center_y, -new_img_width_initEnd, new_img_height_initEnd, 0);
+
+    al_destroy_bitmap(startEndImage);
+    al_destroy_bitmap(nextReturnImage);
+
+    draw_play_pause_button(-1);
+}
+
+void draw_play_pause_button(int playOrPause) {
+    ALLEGRO_BITMAP* playImage = al_load_bitmap("./static/play.png");
+    ALLEGRO_BITMAP* pauseImage = al_load_bitmap("./static/pause.png");
+
+    if (playImage == NULL || pauseImage == NULL) {
+        return;
+    }
+
+    int img_width = al_get_bitmap_width(playImage);
+    int img_height = al_get_bitmap_height(playImage);
+
+    float scale_factor = 0.25;
+
+    int new_img_width = img_width * scale_factor;
+    int new_img_height = img_height * scale_factor;
+
+    int center_x = 300;
+    int center_y = 440;  
+
+    al_draw_filled_rectangle((920 / 2) - new_img_width / 2, center_y, (920 / 2) + new_img_width / 2, center_y + new_img_height, al_map_rgb(255, 255, 255));
+
+    if (playOrPause > 0) {
+        al_draw_scaled_bitmap(pauseImage, 0, 0, img_width, img_height, (920 / 2) - new_img_width / 2, center_y, new_img_width, new_img_height, 0);
+    }
+    else {
+        printf("caiu no else");
+        al_draw_scaled_bitmap(playImage, 0, 0, img_width, img_height, (920 / 2) - new_img_width / 2, center_y, new_img_width, new_img_height, 0);
+    }
+
+    al_destroy_bitmap(playImage);
+    al_destroy_bitmap(pauseImage);
 
     al_flip_display();
 }
