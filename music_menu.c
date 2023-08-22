@@ -30,29 +30,35 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 			draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
 		}
 
-		if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && !musicPlaying) {
-			arguments->done = 0;
-			musicPlaying = !musicPlaying;
+		if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
+			printf("caiu aqui");
+			if (is_over_end_button(mousePosition->x, mousePosition->y)) {
+				if (!musicPlaying) {
+					arguments->done = 0;
+					musicPlaying = !musicPlaying;
 
-			draw_play_pause_button(1);
-			
-			sound_thread = al_create_thread(play_sound, arguments);
-			al_start_thread(sound_thread);
-			
-			continue;
-		}
+					draw_play_pause_button(1);
 
-		if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN && musicPlaying) {
-			arguments->done = 1;
-			musicPlaying = !musicPlaying;
+					sound_thread = al_create_thread(play_sound, arguments);
+					al_start_thread(sound_thread);
 
-			draw_play_pause_button(-1);
+					continue;
+				}
 
-			if (sound_thread) {
-				al_destroy_thread(sound_thread);
+				if (musicPlaying) {
+					arguments->done = 1;
+					musicPlaying = !musicPlaying;
+
+					draw_play_pause_button(-1);
+
+					if (sound_thread) {
+						al_destroy_thread(sound_thread);
+					}
+
+					continue;
+				}
 			}
-
-			continue;
+		
 		}
 	}
 

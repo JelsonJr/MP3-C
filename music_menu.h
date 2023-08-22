@@ -6,6 +6,7 @@
 #include "fonts.h"
 #include "thread.h"
 #include "music.h"
+#include "mouse_location.h"
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro.h>
