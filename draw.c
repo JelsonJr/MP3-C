@@ -47,7 +47,7 @@ void draw_musics_list(int num_musics, char** musics) {
 }
 
 void draw_music_timer(int seconds, ALLEGRO_AUDIO_STREAM* audioStream, ALLEGRO_FONT* font, Position* pos) {
-    double durationInSeconds = al_get_audio_stream_length_secs(audioStream);
+    double durationInSeconds = al_get_audio_stream_length_secs(audioStream) + 2; // procurar bug que prolonga o audio por 2s e consertar essa gambiarra aqui
 
     int minutes = seconds / 60;
     int remaining_seconds = seconds % 60;
@@ -67,11 +67,9 @@ void draw_music_timer(int seconds, ALLEGRO_AUDIO_STREAM* audioStream, ALLEGRO_FO
     al_draw_filled_rectangle(pos->x + 160, pos->y, (pos->x + 160) + rect_width, pos->y + rect_height, al_map_rgb(255, 255, 255));
     al_draw_textf(font, al_map_rgb(0, 0, 0), pos->x + 160, pos->y, ALLEGRO_ALIGN_LEFT, "%s", total_time);
 
-    double porcentagem = (int)durationInSeconds  % 100;
-    double progress = (durationInSeconds / 200) * porcentagem;
+    double progress = (240 / durationInSeconds) * seconds;
 
-    printf("%f ", (durationInSeconds / 200));
-    al_draw_filled_rectangle(pos->x - 90, pos->y + 7, pos->x - 90 + progress, pos->y + 12, al_map_rgb(0, 0, 255));
+    al_draw_filled_rectangle(pos->x - 85, pos->y + 4, pos->x - 85 + progress, pos->y + 8, al_map_rgb(0, 0, 255));
 
     al_flip_display();
 }
