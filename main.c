@@ -121,6 +121,7 @@ int main() {
 		break;
 	}
 
+	printf("fim\n");
 	al_uninstall_audio();
 
 	return 0;

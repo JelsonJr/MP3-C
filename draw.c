@@ -103,9 +103,8 @@ void draw_buttons() {
     al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) + center_x, center_y, -new_img_width, new_img_height, 0);
 
     al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) - 230, center_y, new_img_width_initEnd, new_img_height_initEnd, 0);
-    printf("%d %d %d %d %d %d", img_width_initEnd, img_height_initEnd, (920 / 2) - 230, center_y, new_img_width_initEnd, new_img_height_initEnd);
-    al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) + 230, center_y, -new_img_width_initEnd, new_img_height_initEnd, 0);
-
+    al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) + 230, center_y, -new_img_width_initEnd, new_img_height_initEnd, 0); // segundo botão 
+   
     al_destroy_bitmap(startEndImage);
     al_destroy_bitmap(nextReturnImage);
 
@@ -135,9 +134,7 @@ void draw_play_pause_button(int playOrPause) {
 
     if (playOrPause > 0) {
         al_draw_scaled_bitmap(pauseImage, 0, 0, img_width, img_height, (920 / 2) - new_img_width / 2, center_y, new_img_width, new_img_height, 0);
-    }
-    else {
-        printf("caiu no else");
+    } else {
         al_draw_scaled_bitmap(playImage, 0, 0, img_width, img_height, (920 / 2) - new_img_width / 2, center_y, new_img_width, new_img_height, 0);
     }
 
