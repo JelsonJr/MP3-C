@@ -79,3 +79,15 @@ int is_over_play_pause_button(int mouseX, int mouseY) {
 
     return (mouseX >= buttonLeft && mouseX <= buttonRight && mouseY >= buttonTop && mouseY <= buttonBottom);
 }
+
+int is_mouse_over_music(int mouseX, int mouseY, Position* musicPosition) {
+    int text_width = 250; // Altere para um nome de música típico
+    int text_height = 14;
+
+    int musicTop = musicPosition->y;
+    int musicBottom = musicPosition->y + text_height;
+    int musicLeft = musicPosition->x;
+    int musicRight = musicPosition->x + text_width;
+
+    return (mouseX >= musicLeft && mouseX <= musicRight && mouseY >= musicTop && mouseY <= musicBottom);
+}

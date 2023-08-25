@@ -11,3 +11,4 @@ int is_over_next_button(int mouseX, int mouseY, int buttonCenterX, int buttonCen
 int is_over_init_button(int mouseX, int mouseY);
 int is_over_end_button(int mouseX, int mouseY);
 int is_over_play_pause_button(int mouseX, int mouseY);
+int is_mouse_over_music(int mouseX, int mouseY, Position* musicPosition);

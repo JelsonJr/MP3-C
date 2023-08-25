@@ -32,11 +32,12 @@ void draw_musics_list(int num_musics, char** musics) {
     int text_height = 14;
     int space_between_music = 10;
     ALLEGRO_FONT* font = al_load_font(MONTSERRAT_BOLD, text_height, 0);
- 
+    
     for (int i = 0; i < num_musics; i++) {
         const char* music = musics[i];
         const char* music_name = strrchr(music, '\\') + 1;
 
+        printf("%d \n", al_get_text_width(font, music_name));
         Position* pos = create_position(320, i * (text_height + space_between_music));
         al_draw_textf(font, al_map_rgb(250, 250, 250), pos->x, pos->y, ALLEGRO_ALIGN_LEFT, "%s", music_name);
 
