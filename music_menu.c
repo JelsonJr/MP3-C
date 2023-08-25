@@ -12,7 +12,7 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 
 	ThreadArguments* arguments = create_thread(musics[0]);
 	Position* mousePosition = create_position(0, 0);
-	ALLEGRO_THREAD* sound_thread = al_create_thread(play_sound, arguments);;
+	ALLEGRO_THREAD* sound_thread = NULL;
 	ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
 	ALLEGRO_FONT* font_timer = al_load_font(MONTSERRAT_BOLD, 14, 0);
 	Position* pos_timer = create_position(find_screen_center(display, font_timer, "444:444"), 430);
@@ -33,8 +33,9 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 		if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
 			if (is_over_end_button(mousePosition->x, mousePosition->y)) {
 				arguments->done = 1;
-				arguments->seconds = (int)al_get_audio_stream_length_secs(audioStream) + 2;
-				
+				arguments->seconds = (int)al_get_audio_stream_length_secs(audioStream) + 1;
+
+				al_seek_audio_stream_secs(audioStream, arguments->seconds);
 				draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
 			}
 			
@@ -42,38 +43,53 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 				arguments->seconds = 0;
 				arguments->done = 1;
 
-				if (musicPlaying) {
-					arguments->done = 0;
-					al_start_thread(sound_thread);
+				al_seek_audio_stream_secs(audioStream, 0);
+				
+				if (!musicPlaying) {
+					draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
+					continue;
 				}
 
-				continue;
+				al_join_thread(sound_thread, NULL);
+				al_destroy_thread(sound_thread);
+
+				arguments->done = 0;
+				sound_thread = al_create_thread(play_sound, arguments); 
+				al_start_thread(sound_thread); 
 				
+				continue;
 			}
 
-			if (mousePosition->x >= 450 && mousePosition->y >= 456) {
+			if (is_over_play_pause_button(mousePosition->x, mousePosition->y)) {
 				if (!musicPlaying) {
 					arguments->done = 0;
 					musicPlaying = !musicPlaying;
 
-					draw_play_pause_button(1);
+					draw_play_pause_button(musicPlaying);
+
+					sound_thread = al_create_thread(play_sound, arguments); 
 					al_start_thread(sound_thread);
 
 					continue;
 				}
 
-				if (musicPlaying) {
-					arguments->done = 1;
-					musicPlaying = !musicPlaying;
+				arguments->done = 1;
+				musicPlaying = !musicPlaying;
 
-					draw_play_pause_button(-1);
+				draw_play_pause_button(musicPlaying);
 
-					continue;
-				}
+				al_join_thread(sound_thread, NULL); 
+				al_destroy_thread(sound_thread);
+
+				continue;
+
 			}
 		}
 
 		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
+			arguments->done = 1;
+			al_join_thread(sound_thread, NULL);
+			
 			break;
 		}
 	}

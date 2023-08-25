@@ -14,3 +14,7 @@ ThreadArguments* create_thread(const char* string) {
 
 	return thread;
 }
+
+void destroy_threadArguments(ThreadArguments* arguments) {
+	free(arguments);
+}

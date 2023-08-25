@@ -49,6 +49,7 @@ int is_over_init_button(int mouseX, int mouseY) {
 
     return (mouseX >= buttonLeft && mouseX <= buttonRight && mouseY >= buttonTop && mouseY <= buttonBottom);
 }
+
 int is_over_end_button(int mouseX, int mouseY) {
     int buttonWidth = 207;
     int buttonHeight = 138;
@@ -60,6 +61,21 @@ int is_over_end_button(int mouseX, int mouseY) {
     int buttonBottom = buttonCenterY + buttonHeight / 2;
     int buttonLeft = buttonCenterX - buttonWidth / 2;
     int buttonRight = buttonCenterX + buttonWidth / 2;
+
+    return (mouseX >= buttonLeft && mouseX <= buttonRight && mouseY >= buttonTop && mouseY <= buttonBottom);
+}
+
+int is_over_play_pause_button(int mouseX, int mouseY) {
+    int buttonWidth = 31;
+    int buttonHeight = 37;
+
+    int buttonCenterX = 300;
+    int buttonCenterY = 440;
+
+    int buttonTop = buttonCenterY;
+    int buttonBottom = buttonCenterY + buttonHeight;
+    int buttonLeft = (920 / 2) - buttonWidth / 2;
+    int buttonRight = (920 / 2) + buttonWidth / 2;
 
     return (mouseX >= buttonLeft && mouseX <= buttonRight && mouseY >= buttonTop && mouseY <= buttonBottom);
 }

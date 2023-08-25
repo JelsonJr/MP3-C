@@ -126,7 +126,7 @@ void draw_play_pause_button(int playOrPause) {
 
     int new_img_width = img_width * scale_factor;
     int new_img_height = img_height * scale_factor;
-
+   
     int center_x = 300;
     int center_y = 440;  
 
