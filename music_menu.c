@@ -91,7 +91,7 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 				if (is_mouse_over_music(mousePosition->x, mousePosition->y, musicPosition)) {
 					
 					if (musicPlaying) {
-						arguments->done = 1;
+					 	arguments->done = 1;
 						arguments->filepath = musics[i];
 						arguments->seconds = 0;
 
