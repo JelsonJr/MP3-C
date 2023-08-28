@@ -89,19 +89,21 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 				Position* musicPosition = create_position(320, i * (14 + 10));
 				
 				if (is_mouse_over_music(mousePosition->x, mousePosition->y, musicPosition)) {
-					
-					if (musicPlaying) {
-					 	arguments->done = 1;
-						arguments->filepath = musics[i];
-						arguments->seconds = 0;
-
+					if (sound_thread) {
+				 		arguments->done = 1;
 						al_seek_audio_stream_secs(audioStream, 0);
 						al_join_thread(sound_thread, NULL);
 						al_destroy_thread(sound_thread);
-
-						sound_thread = al_create_thread(play_sound, arguments);
-						al_start_thread(sound_thread);
 					}
+
+					musicPlaying = 1;
+					arguments->filepath = musics[i];
+					arguments->seconds = 0;
+					arguments->done = 0;
+
+					sound_thread = al_create_thread(play_sound, arguments);
+					al_start_thread(sound_thread);
+					draw_play_pause_button(musicPlaying);
 
 					break; 
 				}
