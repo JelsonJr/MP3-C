@@ -33,6 +33,7 @@ void* play_sound(ALLEGRO_THREAD* thread, void* arg) {
 	while (al_get_sample_instance_playing(instance) && !arguments->done) {
 		al_rest(1);
 		arguments->seconds++;
+		printf("%d ", arguments->seconds);
 	}
 	
 	al_destroy_sample_instance(instance);

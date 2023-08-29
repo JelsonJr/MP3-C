@@ -9,8 +9,9 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 	
 	int musicPlaying = 0;
 	int threadPaused = 0;
+	int actualMusic = 0;
 
-	ThreadArguments* arguments = create_thread(musics[0]);
+	ThreadArguments* arguments = create_thread(musics[actualMusic]);
 	Position* mousePosition = create_position(0, 0);
 	ALLEGRO_THREAD* sound_thread = NULL;
 	ALLEGRO_AUDIO_STREAM* audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
@@ -26,32 +27,54 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 		mousePosition->x = ev.mouse.x;
 		mousePosition->y = ev.mouse.y;
 		
+		if ((int)al_get_audio_stream_length_secs(audioStream) == arguments->seconds) {
+			if (sound_thread) {
+				al_join_thread(sound_thread, NULL);
+				al_destroy_thread(sound_thread);
+			}
+
+			actualMusic = actualMusic < num_musics ? actualMusic + 1 : 0;
+			
+			arguments->filepath = musics[actualMusic];
+			arguments->seconds = 0;
+			arguments->done = 0;
+
+			al_seek_audio_stream_secs(audioStream, arguments->seconds);
+			draw_music_timer(arguments->seconds, 1, audioStream, font_timer, pos_timer);
+
+			audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
+			sound_thread = al_create_thread(play_sound, arguments);
+			al_start_thread(sound_thread);
+				
+			continue;
+		}
+
 		if (ev.type == ALLEGRO_EVENT_TIMER && musicPlaying) {
-			draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
+			draw_music_timer(arguments->seconds, 0, audioStream, font_timer, pos_timer);
 		}
 
 		if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
 			if (is_over_end_button(mousePosition->x, mousePosition->y)) {
 				arguments->done = 1;
-				arguments->seconds = (int)al_get_audio_stream_length_secs(audioStream) + 1;
+				arguments->seconds = (int)al_get_audio_stream_length_secs(audioStream);
 
 				al_seek_audio_stream_secs(audioStream, arguments->seconds);
-				draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
+				draw_music_timer(arguments->seconds, 0, audioStream, font_timer, pos_timer);
+
+				actualMusic++;
 			}
 			
 			if (is_over_init_button(mousePosition->x, mousePosition->y)) {
 				arguments->seconds = 0;
 				arguments->done = 1;
 
-				al_seek_audio_stream_secs(audioStream, 0);
+				al_seek_audio_stream_secs(audioStream, arguments->seconds);
+				draw_music_timer(arguments->seconds, 1, audioStream, font_timer, pos_timer);
 				
-				if (!musicPlaying) {
-					draw_music_timer(arguments->seconds, audioStream, font_timer, pos_timer);
-					continue;
+				if (sound_thread) {
+					al_join_thread(sound_thread, NULL);
+					al_destroy_thread(sound_thread);
 				}
-
-				al_join_thread(sound_thread, NULL);
-				al_destroy_thread(sound_thread);
 
 				arguments->done = 0;
 				sound_thread = al_create_thread(play_sound, arguments); 
@@ -102,7 +125,10 @@ int music_menu(Display* display, int num_musics, char** musics, ALLEGRO_EVENT_QU
 					arguments->done = 0;
 
 					sound_thread = al_create_thread(play_sound, arguments);
+					audioStream = al_load_audio_stream(arguments->filepath, 4, 2048);
+
 					al_start_thread(sound_thread);
+					draw_music_timer(arguments->seconds, 1, audioStream, font_timer, pos_timer);
 					draw_play_pause_button(musicPlaying);
 
 					break; 
