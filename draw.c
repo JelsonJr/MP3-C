@@ -81,23 +81,25 @@ void draw_music_timer(int seconds, int restart, ALLEGRO_AUDIO_STREAM* audioStrea
 }
 
 void draw_buttons() {
-    ALLEGRO_BITMAP* nextReturnImage = al_load_bitmap("./static/return-next.png");
+    ALLEGRO_BITMAP* random = al_load_bitmap("./static/random.png");
+    ALLEGRO_BITMAP* repeatImage = al_load_bitmap("./static/repeat.png");
     ALLEGRO_BITMAP* startEndImage = al_load_bitmap("./static/start-end.png");
 
-    if (nextReturnImage == NULL || startEndImage == NULL) {
+    if (repeatImage == NULL || random == NULL || startEndImage == NULL) {
         return;
     }
 
-    int img_width = al_get_bitmap_width(nextReturnImage);
-    int img_height = al_get_bitmap_height(nextReturnImage);
+    int img_width = al_get_bitmap_width(random);
+    int img_height = al_get_bitmap_height(random);
 
     int img_width_initEnd = al_get_bitmap_width(startEndImage);
     int img_height_initEnd = al_get_bitmap_height(startEndImage);
 
     float scale_factor = 0.25;
+    float scale_factor_repeat_random = 0.17;
 
-    int new_img_width = img_width * scale_factor;
-    int new_img_height = img_height * scale_factor;
+    int new_img_width = img_width * scale_factor_repeat_random;
+    int new_img_height = img_height * scale_factor_repeat_random;
 
     int new_img_width_initEnd = img_width * scale_factor;
     int new_img_height_initEnd = img_height * scale_factor;
@@ -105,14 +107,15 @@ void draw_buttons() {
     int center_x = 300;
     int center_y = 420;
     
-    al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) - center_x, center_y, new_img_width, new_img_height, 0);
-    al_draw_scaled_bitmap(nextReturnImage, 0, 0, img_width, img_height, (920 / 2) + center_x, center_y, -new_img_width, new_img_height, 0);
+    al_draw_scaled_bitmap(random, 0, 0, img_width, img_height, (920 / 2) - center_x, center_y + 12, new_img_width, new_img_height, 0);
+    al_draw_scaled_bitmap(repeatImage, 0, 0, img_width, img_height, (920 / 2) + center_x, center_y + 12, -new_img_width, new_img_height, 0);
 
     al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) - 230, center_y, new_img_width_initEnd, new_img_height_initEnd, 0);
     al_draw_scaled_bitmap(startEndImage, 0, 0, img_width_initEnd, img_height_initEnd, (920 / 2) + 230, center_y, -new_img_width_initEnd, new_img_height_initEnd, 0); // segundo botão 
    
     al_destroy_bitmap(startEndImage);
-    al_destroy_bitmap(nextReturnImage);
+    al_destroy_bitmap(random);
+    al_destroy_bitmap(repeatImage);
 
     draw_play_pause_button(-1);
 }
